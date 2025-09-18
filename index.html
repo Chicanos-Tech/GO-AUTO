@@ -139,37 +139,55 @@
 
         <section class="py-20 bg-gray-900">
             <div class="max-w-7xl mx-auto px-6">
-                <!-- Bouton de déconnexion -->
-                <div class="flex justify-between items-center mb-8">
-                    <div class="flex items-center space-x-3">
-                        <div class="w-10 h-10 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-lg flex items-center justify-center">
-                            <svg class="w-5 h-5 text-black" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+                <!-- En-tête Administration -->
+                <div class="admin-panel rounded-2xl p-6 luxury-border mb-8">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-xl flex items-center justify-center">
+                                <svg class="w-6 h-6 text-black" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold text-white">Administrateur</h3>
+                                <p class="text-sm text-gray-400">Session active • Dernière connexion aujourd'hui</p>
+                            </div>
+                        </div>
+                        <button onclick="logout()" class="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center space-x-2 shadow-lg hover:shadow-red-500/25 transform hover:scale-105">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
                             </svg>
-                        </div>
-                        <div>
-                            <p class="font-semibold text-white">Administrateur</p>
-                            <p class="text-sm text-gray-400">Connecté</p>
-                        </div>
+                            <span>Déconnexion</span>
+                        </button>
                     </div>
-                    <button onclick="logout()" class="bg-gray-800 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-medium transition-all duration-300 flex items-center space-x-2 border border-gray-700 hover:border-red-500">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-                        </svg>
-                        <span>Déconnexion</span>
-                    </button>
                 </div>
                 
                 <!-- Onglets Admin -->
-                <div class="flex flex-wrap justify-center gap-4 mb-12 fade-in">
-                    <button onclick="showAdminTab('add-vehicle')" class="admin-tab-btn filter-active px-6 py-3 rounded-full font-medium transition-all">
-                        Ajouter un véhicule
+                <div class="flex flex-wrap justify-center gap-6 mb-12 fade-in">
+                    <button onclick="showAdminTab('add-vehicle')" class="admin-tab-btn bg-gradient-to-r from-yellow-400 to-yellow-600 text-black px-8 py-4 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-yellow-500/25 transform hover:scale-105">
+                        <div class="flex items-center space-x-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                            </svg>
+                            <span>Ajouter un véhicule</span>
+                        </div>
                     </button>
-                    <button onclick="showAdminTab('manage-vehicles')" class="admin-tab-btn px-6 py-3 rounded-full font-medium bg-gray-800 hover:bg-gray-700 transition-all">
-                        Gérer les véhicules
+                    <button onclick="showAdminTab('manage-vehicles')" class="admin-tab-btn bg-gray-800 hover:bg-gray-700 text-white px-8 py-4 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-gray-500/25 transform hover:scale-105 border border-gray-700 hover:border-gray-600">
+                        <div class="flex items-center space-x-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            </svg>
+                            <span>Gérer les véhicules</span>
+                        </div>
                     </button>
-                    <button onclick="showAdminTab('statistics')" class="admin-tab-btn px-6 py-3 rounded-full font-medium bg-gray-800 hover:bg-gray-700 transition-all">
-                        Statistiques
+                    <button onclick="showAdminTab('statistics')" class="admin-tab-btn bg-gray-800 hover:bg-gray-700 text-white px-8 py-4 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-gray-500/25 transform hover:scale-105 border border-gray-700 hover:border-gray-600">
+                        <div class="flex items-center space-x-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                            </svg>
+                            <span>Statistiques</span>
+                        </div>
                     </button>
                 </div>
 
@@ -352,11 +370,21 @@
 
                             <!-- Boutons -->
                             <div class="flex gap-4 pt-6">
-                                <button type="submit" class="flex-1 btn-premium py-4 rounded-lg font-semibold text-lg">
-                                    Ajouter le véhicule
+                                <button type="submit" class="flex-1 bg-gradient-to-r from-yellow-400 to-yellow-600 text-black py-4 rounded-xl font-semibold text-lg transition-all duration-300 shadow-lg hover:shadow-yellow-500/25 transform hover:scale-105">
+                                    <div class="flex items-center justify-center space-x-2">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                                        </svg>
+                                        <span>Ajouter le véhicule</span>
+                                    </div>
                                 </button>
-                                <button type="button" onclick="resetForm()" class="px-8 py-4 border-2 border-gray-600 rounded-lg font-semibold hover:bg-gray-800 transition-colors">
-                                    Réinitialiser
+                                <button type="button" onclick="resetForm()" class="px-8 py-4 bg-gray-800 hover:bg-gray-700 text-white rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-gray-500/25 transform hover:scale-105 border border-gray-700 hover:border-gray-600">
+                                    <div class="flex items-center space-x-2">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                                        </svg>
+                                        <span>Réinitialiser</span>
+                                    </div>
                                 </button>
                             </div>
                         </form>
@@ -838,12 +866,12 @@
             
             // Mettre à jour les boutons
             document.querySelectorAll('.admin-tab-btn').forEach(btn => {
-                btn.classList.remove('filter-active');
-                btn.classList.add('bg-gray-800', 'hover:bg-gray-700');
+                // Réinitialiser tous les boutons au style inactif
+                btn.className = 'admin-tab-btn bg-gray-800 hover:bg-gray-700 text-white px-8 py-4 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-gray-500/25 transform hover:scale-105 border border-gray-700 hover:border-gray-600';
             });
             
-            event.target.classList.add('filter-active');
-            event.target.classList.remove('bg-gray-800', 'hover:bg-gray-700');
+            // Appliquer le style actif au bouton cliqué
+            event.target.closest('button').className = 'admin-tab-btn bg-gradient-to-r from-yellow-400 to-yellow-600 text-black px-8 py-4 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-yellow-500/25 transform hover:scale-105';
 
             // Charger les données selon l'onglet
             if (tabId === 'manage-vehicles') {
@@ -1033,11 +1061,21 @@
                     </div>
                     <div class="flex items-center space-x-4">
                         <span class="${statusColor} text-white px-3 py-1 rounded-full text-sm">${vehicle.status}</span>
-                        <button onclick="editVehicle('${vehicle.id}')" class="btn-premium px-4 py-2 rounded-lg font-medium">
-                            Modifier
+                        <button onclick="editVehicle('${vehicle.id}')" class="bg-gradient-to-r from-yellow-400 to-yellow-600 text-black px-6 py-2 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-yellow-500/25 transform hover:scale-105">
+                            <div class="flex items-center space-x-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                </svg>
+                                <span>Modifier</span>
+                            </div>
                         </button>
-                        <button onclick="deleteVehicle('${vehicle.id}')" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
-                            Supprimer
+                        <button onclick="deleteVehicle('${vehicle.id}')" class="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-6 py-2 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-red-500/25 transform hover:scale-105">
+                            <div class="flex items-center space-x-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                </svg>
+                                <span>Supprimer</span>
+                            </div>
                         </button>
                     </div>
                 `;
@@ -1096,11 +1134,21 @@
                     </div>
 
                     <div class="flex gap-4 pt-6">
-                        <button type="submit" class="flex-1 btn-premium py-3 rounded-lg font-semibold">
-                            Mettre à jour
+                        <button type="submit" class="flex-1 bg-gradient-to-r from-yellow-400 to-yellow-600 text-black py-3 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-yellow-500/25 transform hover:scale-105">
+                            <div class="flex items-center justify-center space-x-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                </svg>
+                                <span>Mettre à jour</span>
+                            </div>
                         </button>
-                        <button type="button" onclick="closeEditModal()" class="px-8 py-3 border-2 border-gray-600 rounded-lg font-semibold hover:bg-gray-800 transition-colors">
-                            Annuler
+                        <button type="button" onclick="closeEditModal()" class="px-8 py-3 bg-gray-800 hover:bg-gray-700 text-white rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-gray-500/25 transform hover:scale-105 border border-gray-700 hover:border-gray-600">
+                            <div class="flex items-center space-x-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                                <span>Annuler</span>
+                            </div>
                         </button>
                     </div>
                 </form>
@@ -1406,5 +1454,5 @@
             alert(`Détails du véhicule:\n${vehicle.brand} ${vehicle.model}\nAnnée: ${vehicle.year}\nPrix: ${parseInt(vehicle.price).toLocaleString()} €\nStatut: ${vehicle.status}`);
         }
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'980e273d51442c31',t:'MTc1ODE3MDMwMS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'980e4176473cd0af',t:'MTc1ODE3MTM3NS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
