@@ -163,20 +163,24 @@
 
                         <!-- Diagnostic de Connexion -->
                         <div class="mt-6 pt-6 border-t border-gray-700">
-                            <div id="connection-diagnostic" class="bg-blue-900/30 border border-blue-500/50 rounded-lg p-4 mb-4">
+                            <div id="connection-diagnostic" class="bg-orange-900/30 border border-orange-500/50 rounded-lg p-4 mb-4">
                                 <div class="flex items-center justify-between mb-3">
-                                    <div class="flex items-center text-sm text-blue-300">
+                                    <div class="flex items-center text-sm text-orange-300">
                                         <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
                                         </svg>
-                                        <span>Diagnostic de connexion Supabase</span>
+                                        <span>⚠️ Configuration Supabase requise</span>
                                     </div>
-                                    <button onclick="testSupabaseConnection()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs font-medium transition-colors">
+                                    <button onclick="testSupabaseConnection()" class="bg-orange-600 hover:bg-orange-700 text-white px-3 py-1 rounded text-xs font-medium transition-colors">
                                         Tester
                                     </button>
                                 </div>
                                 <div id="diagnostic-results" class="space-y-2 text-sm">
-                                    <div class="text-gray-400">Cliquez sur "Tester" pour vérifier la connexion</div>
+                                    <div class="text-orange-200">
+                                        <p class="mb-2">🔧 <strong>Configuration nécessaire :</strong></p>
+                                        <p class="text-xs text-orange-300 mb-2">Vous devez configurer vos propres identifiants Supabase pour utiliser la base de données.</p>
+                                        <p class="text-xs text-orange-300">Cliquez sur "Configuration personnalisée" ci-dessous pour saisir vos identifiants.</p>
+                                    </div>
                                 </div>
                             </div>
                             
@@ -194,8 +198,10 @@
                                     <input type="url" id="supabase-url" placeholder="https://votre-projet.supabase.co" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors text-white placeholder-gray-500 text-sm">
                                 </div>
                                 <div>
-                                    <label class="block text-xs font-medium mb-1 text-gray-400">Clé API Publique</label>
+                                    <label class="block text-xs font-medium mb-1 text-gray-400">Clé API PUBLIQUE (anon key) ⚠️</label>
                                     <input type="text" id="supabase-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors text-white placeholder-gray-500 text-sm">
+                                    <p class="text-xs text-green-400 mt-1">✅ Utilisez la clé "anon" (publique) - sécurisée</p>
+                                    <p class="text-xs text-red-400">❌ Jamais la clé "service_role" (secrète) - dangereuse</p>
                                 </div>
                                 <button onclick="saveDbConfig()" class="w-full bg-gray-700 hover:bg-gray-600 text-white py-2 rounded-lg font-medium text-sm transition-colors">
                                     Sauvegarder Configuration
@@ -748,10 +754,10 @@
         let currentUser = null;
         let vehiclesData = [];
 
-        // Configuration automatique Supabase pour GoAuto95
+        // Configuration Supabase (à personnaliser)
         const SUPABASE_CONFIG = {
             url: 'https://wawrxekxeqljwdeqjgup.supabase.co',
-            key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indhd3J4ZWt4ZXFsandkZXFqZ3VwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ5NzI4MDAsImV4cCI6MjA1MDU0ODgwMH0.goauto2024key'
+            key: 'sb_publishable_aLN6iFYn9CceZ0juFqGF8A_ASWUPKkr'
         };
 
         // Initialisation au chargement de la page
@@ -808,14 +814,43 @@
                 const customConfig = getDbConfig();
                 const finalConfig = (customConfig.url && customConfig.key) ? customConfig : SUPABASE_CONFIG;
                 
+                // Vérifier si une configuration existe
+                if (!finalConfig.url || !finalConfig.key) {
+                    results.push('<div class="text-orange-400">⚠️ <strong>Configuration Supabase requise</strong></div>');
+                    results.push('<div class="text-green-300 mt-2">✅ <strong>URL détectée :</strong> https://wawrxekxeqljwdeqjgup.supabase.co</div>');
+                    results.push('<div class="text-orange-300 mt-2">🔑 <strong>Il vous manque la clé API PUBLIQUE (anon key)</strong></div>');
+                    results.push('<div class="bg-gray-800 p-3 rounded mt-2">');
+                    results.push('<div class="text-sm text-yellow-300 mb-2">📋 <strong>Récupération de votre clé PUBLIQUE :</strong></div>');
+                    results.push('<div class="text-xs text-gray-300 space-y-1">');
+                    results.push('<p>1. Allez sur <a href="https://supabase.com/dashboard/project/wawrxekxeqljwdeqjgup/settings/api" target="_blank" class="text-blue-400 underline font-semibold">votre dashboard API</a> (lien direct)</p>');
+                    results.push('<p>2. Dans la section <strong>"Project API keys"</strong></p>');
+                    results.push('<p>3. Copiez la clé <strong>"anon" / "public"</strong> (commence par eyJ...)</p>');
+                    results.push('<p>4. Collez-la dans "Configuration personnalisée" ci-dessous</p>');
+                    results.push('<p class="text-green-300 mt-2">💡 L\'URL est déjà pré-remplie pour vous !</p>');
+                    results.push('</div></div>');
+                    results.push('<div class="bg-red-900/30 border border-red-500/50 rounded p-2 mt-2">');
+                    results.push('<div class="text-xs text-red-200 font-semibold">⚠️ IMPORTANT : Utilisez UNIQUEMENT la clé PUBLIQUE (anon)</div>');
+                    results.push('<div class="text-xs text-red-300 mt-1">❌ Ne jamais utiliser la clé "service_role" (secrète) - elle est dangereuse !</div>');
+                    results.push('<div class="text-xs text-green-300 mt-1">✅ Utilisez la clé "anon" / "public" - elle est sécurisée pour le frontend</div>');
+                    results.push('</div>');
+                    
+                    resultsDiv.innerHTML = results.map(result => `<div>${result}</div>`).join('');
+                    updateConnectionStatus(false, 'Clé API requise');
+                    
+                    // Pré-remplir l'URL dans le formulaire
+                    const urlInput = document.getElementById('supabase-url');
+                    if (urlInput) {
+                        urlInput.value = 'https://wawrxekxeqljwdeqjgup.supabase.co';
+                    }
+                    return;
+                }
+                
                 results.push(`✅ Configuration: ${customConfig.url ? 'Personnalisée' : 'Par défaut'}`);
                 results.push(`📡 URL: ${finalConfig.url.substring(0, 30)}...`);
                 results.push(`🔑 Clé: ${finalConfig.key.substring(0, 20)}...`);
 
                 // 2. Test de création du client
-                if (!supabase) {
-                    supabase = window.supabase.createClient(finalConfig.url, finalConfig.key);
-                }
+                supabase = window.supabase.createClient(finalConfig.url, finalConfig.key);
                 results.push('✅ Client Supabase créé');
 
                 // 3. Test de connexion basique
@@ -849,6 +884,10 @@ CREATE TABLE vehicles (<br>
                             </div>
                         `);
                         allGood = false;
+                    } else if (healthError.message.includes('Invalid API key')) {
+                        results.push('❌ <strong>Clé API invalide</strong>');
+                        results.push('<div class="text-orange-300 mt-1">Vérifiez que vous utilisez la bonne clé API publique (anon key)</div>');
+                        allGood = false;
                     } else {
                         results.push(`❌ Erreur de connexion: ${healthError.message}`);
                         allGood = false;
@@ -858,27 +897,29 @@ CREATE TABLE vehicles (<br>
                     results.push(`📊 Nombre de véhicules: ${healthCheck || 0}`);
                 }
 
-                // 4. Test des permissions
-                try {
-                    const { data: testData, error: testError } = await supabase
-                        .from('vehicles')
-                        .select('*')
-                        .limit(1);
+                // 4. Test des permissions (seulement si pas d'erreur majeure)
+                if (allGood) {
+                    try {
+                        const { data: testData, error: testError } = await supabase
+                            .from('vehicles')
+                            .select('*')
+                            .limit(1);
 
-                    if (testError && testError.code !== 'PGRST116') {
-                        results.push(`⚠️ Permissions de lecture: ${testError.message}`);
-                    } else if (!testError) {
-                        results.push('✅ Permissions de lecture OK');
+                        if (testError && testError.code !== 'PGRST116') {
+                            results.push(`⚠️ Permissions de lecture: ${testError.message}`);
+                        } else if (!testError) {
+                            results.push('✅ Permissions de lecture OK');
+                        }
+                    } catch (permError) {
+                        results.push(`⚠️ Test permissions: ${permError.message}`);
                     }
-                } catch (permError) {
-                    results.push(`⚠️ Test permissions: ${permError.message}`);
                 }
 
                 // 5. Résumé final
                 if (allGood) {
                     results.push('<div class="text-green-400 font-semibold mt-2">🎉 Connexion Supabase parfaitement configurée !</div>');
                 } else {
-                    results.push('<div class="text-orange-400 font-semibold mt-2">⚠️ Configuration partielle - Voir les détails ci-dessus</div>');
+                    results.push('<div class="text-orange-400 font-semibold mt-2">⚠️ Configuration à corriger - Voir les détails ci-dessus</div>');
                 }
 
             } catch (error) {
@@ -891,7 +932,7 @@ CREATE TABLE vehicles (<br>
             resultsDiv.innerHTML = results.map(result => `<div>${result}</div>`).join('');
 
             // Mettre à jour le statut global
-            updateConnectionStatus(allGood, allGood ? 'Supabase OK' : 'Problème Supabase');
+            updateConnectionStatus(allGood, allGood ? 'Supabase OK' : 'Configuration requise');
         }
 
         // Créer la table des véhicules si elle n'existe pas
@@ -1536,5 +1577,5 @@ CREATE TABLE vehicles (<br>
             });
         }
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'980e916ca74f9e91',t:'MTc1ODE3NDY1MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'980ec0c176c90088',t:'MTc1ODE3NjU4OS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
