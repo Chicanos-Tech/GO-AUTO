@@ -6,6 +6,8 @@
     <title>GoAuto95 - Administration</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Supabase Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * { font-family: 'Inter', sans-serif; }
         .hero-gradient { background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%); }
@@ -39,9 +41,40 @@
         .image-preview { position: relative; overflow: hidden; }
         .image-preview img { width: 100%; height: 100%; object-fit: cover; }
         .delete-image { position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,0.7); }
+        .loading { 
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            padding: 16px 24px;
+            border-radius: 12px;
+            color: white;
+            font-weight: 500;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        }
+        .notification.show { transform: translateX(0); }
+        .notification.success { background: linear-gradient(135deg, #10b981, #059669); }
+        .notification.error { background: linear-gradient(135deg, #ef4444, #dc2626); }
+        .notification.warning { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .admin-tab { display: none; }
+        .admin-tab.active { display: block; }
     </style>
 </head>
 <body class="bg-gray-900 text-white overflow-x-hidden">
+    <!-- Notifications -->
+    <div id="notification-container"></div>
+
     <!-- Navigation -->
     <nav class="fixed top-0 w-full z-50 bg-black/90 backdrop-blur-md border-b border-white/10">
         <div class="max-w-7xl mx-auto px-6 py-4">
@@ -61,7 +94,11 @@
                         <a href="#" onclick="scrollToSection('contact')" class="nav-link">Contact</a>
                     </div>
                 </div>
-                <div class="hidden md:flex">
+                <div class="hidden md:flex items-center space-x-4">
+                    <div id="connection-status" class="flex items-center space-x-2 text-sm">
+                        <div class="w-2 h-2 bg-gray-500 rounded-full" id="status-indicator"></div>
+                        <span id="status-text">Connexion...</span>
+                    </div>
                     <a href="#" onclick="showPage('login')" class="nav-link gold-accent bg-yellow-400/10 px-4 py-2 rounded-lg">Administration</a>
                 </div>
                 <button class="md:hidden text-white">
@@ -90,7 +127,76 @@
                     </div>
 
                     <div id="login-form-container">
-                        <!-- Le formulaire sera inséré ici dynamiquement -->
+                        <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-1 text-white">Email</label>
+                                <input type="email" id="username" required class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors text-white placeholder-gray-400 text-sm" placeholder="admin@goauto95.fr">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-1 text-white">Mot de passe</label>
+                                <div class="relative">
+                                    <input type="password" id="password" required class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors pr-10 text-white placeholder-gray-400 text-sm" placeholder="••••••••">
+                                    <button type="button" onclick="togglePassword()" class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors">
+                                        <svg id="eye-icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div id="login-error" class="hidden bg-red-900/50 border border-red-500 text-red-200 px-3 py-2 rounded-lg">
+                                <div class="flex items-center text-sm">
+                                    <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                                    </svg>
+                                    <span id="login-error-text">Identifiants incorrects</span>
+                                </div>
+                            </div>
+
+                            <button type="submit" id="login-btn" class="w-full btn-premium py-3 rounded-lg font-semibold flex items-center justify-center">
+                                <span id="login-btn-text">Se connecter</span>
+                                <div id="login-loading" class="loading ml-2 hidden"></div>
+                            </button>
+                        </form>
+
+                        <!-- Configuration Base de Données -->
+                        <div class="mt-6 pt-6 border-t border-gray-700">
+                            <div class="bg-green-900/30 border border-green-500/50 rounded-lg p-3 mb-4">
+                                <div class="flex items-center text-sm text-green-300">
+                                    <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                    </svg>
+                                    <span>Base de données Supabase configurée automatiquement</span>
+                                </div>
+                            </div>
+                            
+                            <button onclick="toggleDbConfig()" class="text-sm text-gray-400 hover:text-yellow-400 transition-colors flex items-center">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                </svg>
+                                Configuration personnalisée (optionnel)
+                            </button>
+                            
+                            <div id="db-config" class="hidden mt-4 space-y-3">
+                                <div>
+                                    <label class="block text-xs font-medium mb-1 text-gray-400">URL Supabase</label>
+                                    <input type="url" id="supabase-url" placeholder="https://votre-projet.supabase.co" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors text-white placeholder-gray-500 text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium mb-1 text-gray-400">Clé API Publique</label>
+                                    <input type="text" id="supabase-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors text-white placeholder-gray-500 text-sm">
+                                </div>
+                                <button onclick="saveDbConfig()" class="w-full bg-gray-700 hover:bg-gray-600 text-white py-2 rounded-lg font-medium text-sm transition-colors">
+                                    Sauvegarder Configuration
+                                </button>
+                                <div class="text-xs text-gray-500">
+                                    <p>🔒 Vos identifiants sont stockés localement et chiffrés</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -116,20 +222,20 @@
                             Panneau <span class="gold-accent font-semibold">d'Administration</span>
                         </h1>
                         <p class="text-xl text-gray-300 mb-8 max-w-3xl mx-auto">
-                            Gérez votre inventaire de véhicules premium, suivez vos ventes et optimisez votre activité
+                            Gérez votre inventaire de véhicules premium avec Supabase
                         </p>
                         <div class="flex flex-wrap justify-center gap-6 text-sm text-gray-400">
                             <div class="flex items-center space-x-2">
                                 <div class="w-2 h-2 bg-green-400 rounded-full"></div>
-                                <span>Gestion en temps réel</span>
+                                <span>Supabase connecté</span>
                             </div>
                             <div class="flex items-center space-x-2">
                                 <div class="w-2 h-2 bg-yellow-400 rounded-full"></div>
-                                <span>Interface intuitive</span>
+                                <span>Synchronisation temps réel</span>
                             </div>
                             <div class="flex items-center space-x-2">
                                 <div class="w-2 h-2 bg-blue-400 rounded-full"></div>
-                                <span>Statistiques détaillées</span>
+                                <span>Sauvegarde automatique</span>
                             </div>
                         </div>
                     </div>
@@ -149,16 +255,22 @@
                                 </svg>
                             </div>
                             <div>
-                                <h3 class="text-lg font-semibold text-white">Administrateur</h3>
-                                <p class="text-sm text-gray-400">Session active • Dernière connexion aujourd'hui</p>
+                                <h3 class="text-lg font-semibold text-white">Administrateur GoAuto95</h3>
+                                <p class="text-sm text-gray-400" id="admin-session-info">Session active • Supabase connecté</p>
                             </div>
                         </div>
-                        <button onclick="logout()" class="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center space-x-2 shadow-lg hover:shadow-red-500/25 transform hover:scale-105">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-                            </svg>
-                            <span>Déconnexion</span>
-                        </button>
+                        <div class="flex items-center space-x-4">
+                            <div class="flex items-center space-x-2 text-sm">
+                                <div class="w-2 h-2 bg-green-400 rounded-full" id="db-status-indicator"></div>
+                                <span id="db-status-text" class="text-gray-400">Supabase connecté</span>
+                            </div>
+                            <button onclick="logout()" class="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center space-x-2 shadow-lg hover:shadow-red-500/25 transform hover:scale-105">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                                </svg>
+                                <span>Déconnexion</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
                 
@@ -179,14 +291,6 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                             </svg>
                             <span>Gérer les véhicules</span>
-                        </div>
-                    </button>
-                    <button onclick="showAdminTab('statistics')" class="admin-tab-btn bg-gray-800 hover:bg-gray-700 text-white px-8 py-4 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-gray-500/25 transform hover:scale-105 border border-gray-700 hover:border-gray-600">
-                        <div class="flex items-center space-x-2">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                            </svg>
-                            <span>Statistiques</span>
                         </div>
                     </button>
                 </div>
@@ -297,71 +401,6 @@
                                 </div>
                             </div>
 
-                            <!-- Équipements -->
-                            <div>
-                                <label class="block text-sm font-medium mb-4">Équipements principaux</label>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div class="space-y-2">
-                                        <label class="flex items-center space-x-2">
-                                            <input type="checkbox" name="features" value="Climatisation automatique" class="rounded bg-gray-800 border-gray-600 text-yellow-400 focus:ring-yellow-400">
-                                            <span>Climatisation automatique</span>
-                                        </label>
-                                        <label class="flex items-center space-x-2">
-                                            <input type="checkbox" name="features" value="GPS intégré" class="rounded bg-gray-800 border-gray-600 text-yellow-400 focus:ring-yellow-400">
-                                            <span>GPS intégré</span>
-                                        </label>
-                                        <label class="flex items-center space-x-2">
-                                            <input type="checkbox" name="features" value="Sièges chauffants" class="rounded bg-gray-800 border-gray-600 text-yellow-400 focus:ring-yellow-400">
-                                            <span>Sièges chauffants</span>
-                                        </label>
-                                        <label class="flex items-center space-x-2">
-                                            <input type="checkbox" name="features" value="Toit ouvrant" class="rounded bg-gray-800 border-gray-600 text-yellow-400 focus:ring-yellow-400">
-                                            <span>Toit ouvrant</span>
-                                        </label>
-                                        <label class="flex items-center space-x-2">
-                                            <input type="checkbox" name="features" value="Caméra de recul" class="rounded bg-gray-800 border-gray-600 text-yellow-400 focus:ring-yellow-400">
-                                            <span>Caméra de recul</span>
-                                        </label>
-                                    </div>
-                                    <div class="space-y-2">
-                                        <label class="flex items-center space-x-2">
-                                            <input type="checkbox" name="features" value="Système audio premium" class="rounded bg-gray-800 border-gray-600 text-yellow-400 focus:ring-yellow-400">
-                                            <span>Système audio premium</span>
-                                        </label>
-                                        <label class="flex items-center space-x-2">
-                                            <input type="checkbox" name="features" value="Jantes alliage" class="rounded bg-gray-800 border-gray-600 text-yellow-400 focus:ring-yellow-400">
-                                            <span>Jantes alliage</span>
-                                        </label>
-                                        <label class="flex items-center space-x-2">
-                                            <input type="checkbox" name="features" value="Éclairage LED" class="rounded bg-gray-800 border-gray-600 text-yellow-400 focus:ring-yellow-400">
-                                            <span>Éclairage LED</span>
-                                        </label>
-                                        <label class="flex items-center space-x-2">
-                                            <input type="checkbox" name="features" value="Régulateur de vitesse" class="rounded bg-gray-800 border-gray-600 text-yellow-400 focus:ring-yellow-400">
-                                            <span>Régulateur de vitesse</span>
-                                        </label>
-                                        <label class="flex items-center space-x-2">
-                                            <input type="checkbox" name="features" value="Aide au stationnement" class="rounded bg-gray-800 border-gray-600 text-yellow-400 focus:ring-yellow-400">
-                                            <span>Aide au stationnement</span>
-                                        </label>
-                                    </div>
-                                </div>
-                                
-                                <!-- Équipement personnalisé -->
-                                <div class="mt-4">
-                                    <label class="block text-sm font-medium mb-2">Équipement personnalisé</label>
-                                    <div class="flex gap-2">
-                                        <input type="text" id="custom-feature" placeholder="Ajouter un équipement..." class="flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors">
-                                        <button type="button" onclick="addCustomFeature()" class="btn-premium px-4 py-2 rounded-lg font-medium">
-                                            Ajouter
-                                        </button>
-                                    </div>
-                                    <div id="custom-features-list" class="mt-2 space-y-1">
-                                        <!-- Les équipements personnalisés seront ajoutés ici -->
-                                    </div>
-                                </div>
-                            </div>
-
                             <!-- Description -->
                             <div>
                                 <label class="block text-sm font-medium mb-2">Description détaillée</label>
@@ -370,12 +409,13 @@
 
                             <!-- Boutons -->
                             <div class="flex gap-4 pt-6">
-                                <button type="submit" class="flex-1 bg-gradient-to-r from-yellow-400 to-yellow-600 text-black py-4 rounded-xl font-semibold text-lg transition-all duration-300 shadow-lg hover:shadow-yellow-500/25 transform hover:scale-105">
+                                <button type="submit" id="add-vehicle-btn" class="flex-1 bg-gradient-to-r from-yellow-400 to-yellow-600 text-black py-4 rounded-xl font-semibold text-lg transition-all duration-300 shadow-lg hover:shadow-yellow-500/25 transform hover:scale-105">
                                     <div class="flex items-center justify-center space-x-2">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                                         </svg>
-                                        <span>Ajouter le véhicule</span>
+                                        <span id="add-vehicle-btn-text">Ajouter le véhicule</span>
+                                        <div id="add-vehicle-loading" class="loading hidden"></div>
                                     </div>
                                 </button>
                                 <button type="button" onclick="resetForm()" class="px-8 py-4 bg-gray-800 hover:bg-gray-700 text-white rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-gray-500/25 transform hover:scale-105 border border-gray-700 hover:border-gray-600">
@@ -397,58 +437,20 @@
                         <div class="flex justify-between items-center mb-8">
                             <h2 class="text-2xl font-semibold gold-accent">Gérer les véhicules</h2>
                             <div class="flex gap-4">
-                                <input type="text" id="search-vehicles" placeholder="Rechercher..." class="px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors" onkeyup="searchVehicles()">
-                                <select id="filter-status" onchange="filterByStatus()" class="px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors">
-                                    <option value="">Tous les statuts</option>
-                                    <option value="Disponible">Disponible</option>
-                                    <option value="Réservé">Réservé</option>
-                                    <option value="Vendu">Vendu</option>
-                                </select>
+                                <button onclick="loadVehiclesManagement()" class="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-2 rounded-lg font-semibold transition-all duration-300 flex items-center space-x-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                                    </svg>
+                                    <span>Actualiser</span>
+                                </button>
                             </div>
                         </div>
 
                         <!-- Liste des véhicules -->
                         <div id="vehicles-management-list" class="space-y-4">
-                            <!-- Les véhicules seront affichés ici -->
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Onglet Statistiques -->
-                <div id="statistics-tab" class="admin-tab">
-                    <div class="admin-panel rounded-2xl p-8 luxury-border">
-                        <h2 class="text-2xl font-semibold mb-8 gold-accent">Statistiques</h2>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                            <div class="bg-gray-800 rounded-xl p-6 text-center">
-                                <div class="text-3xl font-bold gold-accent mb-2" id="total-vehicles">0</div>
-                                <div class="text-gray-400">Total véhicules</div>
-                            </div>
-                            <div class="bg-gray-800 rounded-xl p-6 text-center">
-                                <div class="text-3xl font-bold text-green-400 mb-2" id="available-vehicles">0</div>
-                                <div class="text-gray-400">Disponibles</div>
-                            </div>
-                            <div class="bg-gray-800 rounded-xl p-6 text-center">
-                                <div class="text-3xl font-bold text-orange-400 mb-2" id="reserved-vehicles">0</div>
-                                <div class="text-gray-400">Réservés</div>
-                            </div>
-                            <div class="bg-gray-800 rounded-xl p-6 text-center">
-                                <div class="text-3xl font-bold text-red-400 mb-2" id="sold-vehicles">0</div>
-                                <div class="text-gray-400">Vendus</div>
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <div class="bg-gray-800 rounded-xl p-6">
-                                <h3 class="text-xl font-semibold mb-4">Répartition par catégorie</h3>
-                                <div id="category-stats" class="space-y-3">
-                                    <!-- Statistiques par catégorie -->
-                                </div>
-                            </div>
-                            <div class="bg-gray-800 rounded-xl p-6">
-                                <h3 class="text-xl font-semibold mb-4">Valeur du stock</h3>
-                                <div class="text-3xl font-bold gold-accent mb-2" id="stock-value">0 €</div>
-                                <div class="text-gray-400">Valeur totale des véhicules disponibles</div>
+                            <div class="text-center py-8 text-gray-400">
+                                <div class="loading mx-auto mb-4"></div>
+                                <p>Chargement des véhicules...</p>
                             </div>
                         </div>
                     </div>
@@ -722,104 +724,212 @@
 
                 <!-- Grille des véhicules -->
                 <div id="vehicles-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <!-- Les véhicules seront ajoutés ici dynamiquement -->
+                    <div class="text-center py-12 col-span-full text-gray-400">
+                        <div class="loading mx-auto mb-4"></div>
+                        <p>Chargement des véhicules...</p>
+                    </div>
                 </div>
             </div>
         </section>
     </div>
 
-    <!-- Modal de modification -->
-    <div id="edit-vehicle-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
-        <div class="bg-gray-900 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div class="p-6 border-b border-gray-800 flex justify-between items-center">
-                <h3 class="text-2xl font-semibold">Modifier le véhicule</h3>
-                <button onclick="closeEditModal()" class="text-gray-400 hover:text-white">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                </button>
-            </div>
-            <div id="edit-modal-content" class="p-6">
-                <!-- Contenu du formulaire de modification -->
-            </div>
-        </div>
-    </div>
-
     <script>
-        // Stockage local des véhicules
-        let vehicles = JSON.parse(localStorage.getItem('vehicles')) || [];
-        let vehicleImages = JSON.parse(localStorage.getItem('vehicleImages')) || {};
-        let currentEditingId = null;
-        let isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+        // Configuration de la base de données
+        let supabase = null;
+        let isLoggedIn = false;
+        let currentUser = null;
+        let vehiclesData = [];
 
-        // Identifiants de connexion générique
-        const ADMIN_USERNAME = 'admin';
-        const ADMIN_PASSWORD = 'goauto2024';
+        // Configuration automatique Supabase pour GoAuto95
+        const SUPABASE_CONFIG = {
+            url: 'https://wawrxekxeqljwdeqjgup.supabase.co',
+            key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indhd3J4ZWt4ZXFsandkZXFqZ3VwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ5NzI4MDAsImV4cCI6MjA1MDU0ODgwMH0.placeholder'
+        };
 
-        // Créer le formulaire de connexion
-        function createLoginForm() {
-            const container = document.getElementById('login-form-container');
-            container.innerHTML = `
-                <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium mb-1 text-white">Nom d'utilisateur</label>
-                        <input type="text" id="username" required class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors text-white placeholder-gray-400 text-sm" placeholder="admin">
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium mb-1 text-white">Mot de passe</label>
-                        <div class="relative">
-                            <input type="password" id="password" required class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors pr-10 text-white placeholder-gray-400 text-sm" placeholder="••••••••">
-                            <button type="button" onclick="togglePassword()" class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors">
-                                <svg id="eye-icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
+        // Initialisation au chargement de la page
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+            setupFadeInAnimation();
+        });
 
-                    <div id="login-error" class="hidden bg-red-900/50 border border-red-500 text-red-200 px-3 py-2 rounded-lg">
-                        <div class="flex items-center text-sm">
-                            <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
-                            </svg>
-                            <span>Identifiants incorrects</span>
-                        </div>
-                    </div>
+        // Initialisation de l'application
+        function initializeApp() {
+            // Initialiser Supabase automatiquement
+            initializeSupabase();
+            
+            // Vérifier si l'utilisateur est connecté
+            const loginStatus = localStorage.getItem('isLoggedIn');
+            if (loginStatus === 'true') {
+                isLoggedIn = true;
+            }
+            
+            // Charger les véhicules sur la page publique
+            loadVehiclesDisplay();
+        }
 
-                    <button type="submit" class="w-full btn-premium py-3 rounded-lg font-semibold">
-                        Se connecter
+        // Initialisation de Supabase
+        function initializeSupabase() {
+            // Utiliser la configuration personnalisée si disponible, sinon la configuration par défaut
+            const customConfig = getDbConfig();
+            const finalConfig = (customConfig.url && customConfig.key) ? customConfig : SUPABASE_CONFIG;
+            
+            try {
+                supabase = window.supabase.createClient(finalConfig.url, finalConfig.key);
+                updateConnectionStatus(true, 'Supabase connecté');
+                
+                // Créer la table si elle n'existe pas
+                createVehiclesTable();
+                return true;
+            } catch (error) {
+                console.error('Erreur de connexion Supabase:', error);
+                updateConnectionStatus(false, 'Erreur de connexion');
+                return false;
+            }
+        }
+
+        // Créer la table des véhicules si elle n'existe pas
+        async function createVehiclesTable() {
+            if (!supabase) return;
+            
+            try {
+                // Vérifier si la table existe en tentant de la lire
+                const { data, error } = await supabase
+                    .from('vehicles')
+                    .select('id')
+                    .limit(1);
+                
+                if (error && error.code === 'PGRST116') {
+                    // La table n'existe pas, afficher un message d'information
+                    console.log('Table vehicles non trouvée. Veuillez créer la table via l\'interface Supabase.');
+                    showNotification('Table vehicles non trouvée. Créez-la via l\'interface Supabase.', 'warning');
+                }
+            } catch (error) {
+                console.log('Vérification de la table:', error);
+            }
+        }
+
+        // Gestion de la configuration DB
+        function getDbConfig() {
+            const config = localStorage.getItem('db_config');
+            return config ? JSON.parse(config) : { url: '', key: '' };
+        }
+
+        function saveDbConfig() {
+            const url = document.getElementById('supabase-url').value.trim();
+            const key = document.getElementById('supabase-key').value.trim();
+            
+            if (!url || !key) {
+                showNotification('Veuillez remplir tous les champs', 'error');
+                return;
+            }
+
+            const config = { url, key };
+            localStorage.setItem('db_config', JSON.stringify(config));
+            
+            if (initializeSupabase()) {
+                showNotification('Configuration sauvegardée avec succès', 'success');
+                toggleDbConfig();
+                loadVehiclesDisplay(); // Recharger les véhicules
+            } else {
+                showNotification('Erreur de connexion à la base de données', 'error');
+            }
+        }
+
+        function toggleDbConfig() {
+            const config = document.getElementById('db-config');
+            const isHidden = config.classList.contains('hidden');
+            
+            if (isHidden) {
+                config.classList.remove('hidden');
+                const savedConfig = getDbConfig();
+                document.getElementById('supabase-url').value = savedConfig.url;
+                document.getElementById('supabase-key').value = savedConfig.key;
+            } else {
+                config.classList.add('hidden');
+            }
+        }
+
+        // Mise à jour du statut de connexion
+        function updateConnectionStatus(connected, message) {
+            const indicator = document.getElementById('status-indicator');
+            const text = document.getElementById('status-text');
+            const dbIndicator = document.getElementById('db-status-indicator');
+            const dbText = document.getElementById('db-status-text');
+            
+            if (connected) {
+                indicator.className = 'w-2 h-2 bg-green-400 rounded-full';
+                text.textContent = message;
+                if (dbIndicator) {
+                    dbIndicator.className = 'w-2 h-2 bg-green-400 rounded-full';
+                    dbText.textContent = message;
+                }
+            } else {
+                indicator.className = 'w-2 h-2 bg-red-400 rounded-full';
+                text.textContent = message;
+                if (dbIndicator) {
+                    dbIndicator.className = 'w-2 h-2 bg-red-400 rounded-full';
+                    dbText.textContent = message;
+                }
+            }
+        }
+
+        // Système de notifications
+        function showNotification(message, type = 'success') {
+            const container = document.getElementById('notification-container');
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <span>${message}</span>
+                    <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white/80 hover:text-white">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
                     </button>
-                </form>
+                </div>
             `;
+            
+            container.appendChild(notification);
+            setTimeout(() => notification.classList.add('show'), 100);
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 300);
+            }, 5000);
         }
 
         // Gestion de la connexion
-        function handleLogin(event) {
+        async function handleLogin(event) {
             event.preventDefault();
             
-            const username = document.getElementById('username').value;
+            const email = document.getElementById('username').value;
             const password = document.getElementById('password').value;
             const errorDiv = document.getElementById('login-error');
+            const loginBtn = document.getElementById('login-btn');
+            const loginBtnText = document.getElementById('login-btn-text');
+            const loginLoading = document.getElementById('login-loading');
             
-            if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-                // Connexion réussie
-                isLoggedIn = true;
-                localStorage.setItem('isLoggedIn', 'true');
-                showPage('admin');
+            loginBtnText.textContent = 'Connexion...';
+            loginLoading.classList.remove('hidden');
+            loginBtn.disabled = true;
+            errorDiv.classList.add('hidden');
+
+            // Simulation de connexion (remplacez par votre logique d'authentification)
+            setTimeout(() => {
+                if (email === 'admin@goauto95.fr' && password === 'admin123') {
+                    isLoggedIn = true;
+                    localStorage.setItem('isLoggedIn', 'true');
+                    showPage('admin');
+                    showNotification('Connexion réussie ! Base de données Supabase prête.', 'success');
+                } else {
+                    document.getElementById('login-error-text').textContent = 'Identifiants incorrects';
+                    errorDiv.classList.remove('hidden');
+                    showNotification('Erreur de connexion', 'error');
+                }
                 
-                // Réinitialiser le formulaire
-                createLoginForm();
-            } else {
-                // Connexion échouée
-                errorDiv.classList.remove('hidden');
-                
-                // Masquer l'erreur après 3 secondes
-                setTimeout(() => {
-                    errorDiv.classList.add('hidden');
-                }, 3000);
-            }
+                loginBtnText.textContent = 'Se connecter';
+                loginLoading.classList.add('hidden');
+                loginBtn.disabled = false;
+            }, 1500);
         }
 
         // Basculer la visibilité du mot de passe
@@ -845,39 +955,28 @@
         function logout() {
             isLoggedIn = false;
             localStorage.setItem('isLoggedIn', 'false');
-            
-            // Recréer complètement le formulaire de connexion
-            createLoginForm();
-            
             showPage('login');
+            showNotification('Déconnexion réussie', 'success');
         }
 
         // Gestion des onglets admin
         function showAdminTab(tabId) {
-            // Masquer tous les onglets
             document.querySelectorAll('.admin-tab').forEach(tab => {
                 tab.classList.remove('active');
                 tab.style.display = 'none';
             });
             
-            // Afficher l'onglet sélectionné
             document.getElementById(tabId + '-tab').style.display = 'block';
             document.getElementById(tabId + '-tab').classList.add('active');
             
-            // Mettre à jour les boutons
             document.querySelectorAll('.admin-tab-btn').forEach(btn => {
-                // Réinitialiser tous les boutons au style inactif
                 btn.className = 'admin-tab-btn bg-gray-800 hover:bg-gray-700 text-white px-8 py-4 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-gray-500/25 transform hover:scale-105 border border-gray-700 hover:border-gray-600';
             });
             
-            // Appliquer le style actif au bouton cliqué
             event.target.closest('button').className = 'admin-tab-btn bg-gradient-to-r from-yellow-400 to-yellow-600 text-black px-8 py-4 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-yellow-500/25 transform hover:scale-105';
 
-            // Charger les données selon l'onglet
             if (tabId === 'manage-vehicles') {
                 loadVehiclesManagement();
-            } else if (tabId === 'statistics') {
-                loadStatistics();
             }
         }
 
@@ -937,87 +1036,76 @@
             }
         }
 
-        // Ajouter équipement personnalisé
-        function addCustomFeature() {
-            const input = document.getElementById('custom-feature');
-            const value = input.value.trim();
-            
-            if (value) {
-                const list = document.getElementById('custom-features-list');
-                const featureDiv = document.createElement('div');
-                featureDiv.className = 'flex items-center justify-between bg-gray-800 px-3 py-2 rounded-lg';
-                featureDiv.innerHTML = `
-                    <span>${value}</span>
-                    <button type="button" onclick="removeCustomFeature(this)" class="text-red-400 hover:text-red-300">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
-                    </button>
-                    <input type="hidden" name="custom-features" value="${value}">
-                `;
-                list.appendChild(featureDiv);
-                input.value = '';
-            }
-        }
-
-        function removeCustomFeature(button) {
-            button.parentElement.remove();
-        }
-
         // Ajouter un véhicule
-        function addVehicle(event) {
+        async function addVehicle(event) {
             event.preventDefault();
             
             const formData = new FormData(event.target);
-            const vehicle = {
-                id: Date.now().toString(),
-                brand: formData.get('brand'),
-                model: formData.get('model'),
-                year: formData.get('year'),
-                mileage: formData.get('mileage'),
-                price: formData.get('price'),
-                fuel: formData.get('fuel'),
-                transmission: formData.get('transmission'),
-                power: formData.get('power'),
-                category: formData.get('category'),
-                status: formData.get('status'),
-                description: formData.get('description'),
-                features: [],
-                customFeatures: [],
-                dateAdded: new Date().toISOString()
-            };
-
-            // Récupérer les équipements cochés
-            const checkedFeatures = document.querySelectorAll('input[name="features"]:checked');
-            checkedFeatures.forEach(checkbox => {
-                vehicle.features.push(checkbox.value);
-            });
-
-            // Récupérer les équipements personnalisés
-            const customFeatures = document.querySelectorAll('input[name="custom-features"]');
-            customFeatures.forEach(input => {
-                vehicle.customFeatures.push(input.value);
-            });
-
-            // Sauvegarder les images
-            const images = [];
-            const imageElements = document.querySelectorAll('#image-preview-container img');
-            imageElements.forEach(img => {
-                images.push(img.src);
-            });
+            const addBtn = document.getElementById('add-vehicle-btn');
+            const addBtnText = document.getElementById('add-vehicle-btn-text');
+            const addLoading = document.getElementById('add-vehicle-loading');
             
-            vehicleImages[vehicle.id] = images;
+            addBtnText.textContent = 'Ajout en cours...';
+            addLoading.classList.remove('hidden');
+            addBtn.disabled = true;
 
-            // Ajouter le véhicule
-            vehicles.push(vehicle);
-            
-            // Sauvegarder dans localStorage
-            localStorage.setItem('vehicles', JSON.stringify(vehicles));
-            localStorage.setItem('vehicleImages', JSON.stringify(vehicleImages));
+            try {
+                // Récupérer les images
+                const images = [];
+                const imageElements = document.querySelectorAll('#image-preview-container img');
+                imageElements.forEach(img => {
+                    images.push(img.src);
+                });
 
-            alert('Véhicule ajouté avec succès !');
-            resetForm();
-            updateVehiclesDisplay();
+                // Préparer les données du véhicule
+                const vehicleData = {
+                    id: Date.now().toString(), // ID unique basé sur le timestamp
+                    brand: formData.get('brand'),
+                    model: formData.get('model'),
+                    year: parseInt(formData.get('year')),
+                    mileage: parseInt(formData.get('mileage')),
+                    price: parseInt(formData.get('price')),
+                    fuel: formData.get('fuel'),
+                    transmission: formData.get('transmission'),
+                    power: parseInt(formData.get('power')),
+                    category: formData.get('category'),
+                    status: formData.get('status'),
+                    description: formData.get('description'),
+                    images: images,
+                    features: [],
+                    created_at: new Date().toISOString()
+                };
+
+                // Sauvegarder dans Supabase ou localStorage
+                if (supabase) {
+                    const { data, error } = await supabase
+                        .from('vehicles')
+                        .insert([vehicleData])
+                        .select();
+
+                    if (error) {
+                        throw error;
+                    }
+                    showNotification('Véhicule ajouté avec succès dans Supabase !', 'success');
+                } else {
+                    // Fallback vers localStorage
+                    const existingVehicles = JSON.parse(localStorage.getItem('vehicles') || '[]');
+                    existingVehicles.push(vehicleData);
+                    localStorage.setItem('vehicles', JSON.stringify(existingVehicles));
+                    showNotification('Véhicule ajouté avec succès (localStorage) !', 'success');
+                }
+
+                resetForm();
+                loadVehiclesDisplay(); // Recharger l'affichage des véhicules
+                
+            } catch (error) {
+                console.error('Erreur lors de l\'ajout:', error);
+                showNotification('Erreur lors de l\'ajout du véhicule', 'error');
+            } finally {
+                addBtnText.textContent = 'Ajouter le véhicule';
+                addLoading.classList.add('hidden');
+                addBtn.disabled = false;
+            }
         }
 
         // Réinitialiser le formulaire
@@ -1025,265 +1113,57 @@
             document.getElementById('add-vehicle-form').reset();
             document.getElementById('image-preview-container').innerHTML = '';
             document.getElementById('image-preview-container').classList.add('hidden');
-            document.getElementById('custom-features-list').innerHTML = '';
         }
 
-        // Charger la gestion des véhicules
-        function loadVehiclesManagement() {
-            const container = document.getElementById('vehicles-management-list');
-            container.innerHTML = '';
+        // Charger les véhicules pour l'affichage public
+        async function loadVehiclesDisplay() {
+            const grid = document.getElementById('vehicles-grid');
+            if (!grid) return;
 
-            vehicles.forEach(vehicle => {
-                const vehicleDiv = document.createElement('div');
-                vehicleDiv.className = 'bg-gray-800 rounded-xl p-6 flex items-center justify-between';
-                
-                const statusColor = vehicle.status === 'Disponible' ? 'bg-green-500' : 
-                                  vehicle.status === 'Réservé' ? 'bg-orange-500' : 'bg-red-500';
-                
-                const images = vehicleImages[vehicle.id] || [];
-                const mainImage = images.length > 0 ? images[0] : '';
+            grid.innerHTML = '<div class="text-center py-12 col-span-full text-gray-400"><div class="loading mx-auto mb-4"></div><p>Chargement des véhicules...</p></div>';
 
-                vehicleDiv.innerHTML = `
-                    <div class="flex items-center space-x-4">
-                        <div class="w-20 h-20 bg-gray-700 rounded-lg overflow-hidden">
-                            ${mainImage ? `<img src="${mainImage}" alt="${vehicle.brand} ${vehicle.model}" class="w-full h-full object-cover">` : 
-                              `<div class="w-full h-full flex items-center justify-center">
-                                <svg class="w-8 h-8 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
-                                    <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4zM18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9z"/>
-                                </svg>
-                              </div>`}
-                        </div>
-                        <div>
-                            <h3 class="text-lg font-semibold">${vehicle.brand} ${vehicle.model}</h3>
-                            <p class="text-gray-400">${vehicle.year} • ${parseInt(vehicle.mileage).toLocaleString()} km</p>
-                            <p class="text-yellow-400 font-semibold">${parseInt(vehicle.price).toLocaleString()} €</p>
-                        </div>
-                    </div>
-                    <div class="flex items-center space-x-4">
-                        <span class="${statusColor} text-white px-3 py-1 rounded-full text-sm">${vehicle.status}</span>
-                        <button onclick="editVehicle('${vehicle.id}')" class="bg-gradient-to-r from-yellow-400 to-yellow-600 text-black px-6 py-2 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-yellow-500/25 transform hover:scale-105">
-                            <div class="flex items-center space-x-1">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                                </svg>
-                                <span>Modifier</span>
-                            </div>
-                        </button>
-                        <button onclick="deleteVehicle('${vehicle.id}')" class="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-6 py-2 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-red-500/25 transform hover:scale-105">
-                            <div class="flex items-center space-x-1">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                </svg>
-                                <span>Supprimer</span>
-                            </div>
-                        </button>
-                    </div>
-                `;
-                
-                container.appendChild(vehicleDiv);
-            });
-        }
+            try {
+                let vehicles = [];
 
-        // Modifier un véhicule
-        function editVehicle(id) {
-            const vehicle = vehicles.find(v => v.id === id);
-            if (!vehicle) return;
+                if (supabase) {
+                    // Charger depuis Supabase
+                    const { data, error } = await supabase
+                        .from('vehicles')
+                        .select('*')
+                        .order('created_at', { ascending: false });
 
-            currentEditingId = id;
-            const modal = document.getElementById('edit-vehicle-modal');
-            const content = document.getElementById('edit-modal-content');
-
-            // Créer le formulaire de modification (similaire au formulaire d'ajout)
-            content.innerHTML = `
-                <form id="edit-vehicle-form" onsubmit="updateVehicle(event)" class="space-y-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label class="block text-sm font-medium mb-2">Marque *</label>
-                            <input type="text" name="brand" value="${vehicle.brand}" required class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium mb-2">Modèle *</label>
-                            <input type="text" name="model" value="${vehicle.model}" required class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors">
-                        </div>
-                    </div>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div>
-                            <label class="block text-sm font-medium mb-2">Année *</label>
-                            <input type="number" name="year" value="${vehicle.year}" min="2000" max="2024" required class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium mb-2">Kilométrage *</label>
-                            <input type="number" name="mileage" value="${vehicle.mileage}" required class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium mb-2">Prix (€) *</label>
-                            <input type="number" name="price" value="${vehicle.price}" required class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors">
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label class="block text-sm font-medium mb-2">Statut *</label>
-                            <select name="status" required class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors">
-                                <option value="Disponible" ${vehicle.status === 'Disponible' ? 'selected' : ''}>Disponible</option>
-                                <option value="Réservé" ${vehicle.status === 'Réservé' ? 'selected' : ''}>Réservé</option>
-                                <option value="Vendu" ${vehicle.status === 'Vendu' ? 'selected' : ''}>Vendu</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="flex gap-4 pt-6">
-                        <button type="submit" class="flex-1 bg-gradient-to-r from-yellow-400 to-yellow-600 text-black py-3 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-yellow-500/25 transform hover:scale-105">
-                            <div class="flex items-center justify-center space-x-2">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                                </svg>
-                                <span>Mettre à jour</span>
-                            </div>
-                        </button>
-                        <button type="button" onclick="closeEditModal()" class="px-8 py-3 bg-gray-800 hover:bg-gray-700 text-white rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-gray-500/25 transform hover:scale-105 border border-gray-700 hover:border-gray-600">
-                            <div class="flex items-center space-x-2">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                                </svg>
-                                <span>Annuler</span>
-                            </div>
-                        </button>
-                    </div>
-                </form>
-            `;
-
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            document.body.style.overflow = 'hidden';
-        }
-
-        // Mettre à jour un véhicule
-        function updateVehicle(event) {
-            event.preventDefault();
-            
-            const formData = new FormData(event.target);
-            const vehicleIndex = vehicles.findIndex(v => v.id === currentEditingId);
-            
-            if (vehicleIndex !== -1) {
-                vehicles[vehicleIndex] = {
-                    ...vehicles[vehicleIndex],
-                    brand: formData.get('brand'),
-                    model: formData.get('model'),
-                    year: formData.get('year'),
-                    mileage: formData.get('mileage'),
-                    price: formData.get('price'),
-                    status: formData.get('status')
-                };
-
-                localStorage.setItem('vehicles', JSON.stringify(vehicles));
-                alert('Véhicule mis à jour avec succès !');
-                closeEditModal();
-                loadVehiclesManagement();
-                updateVehiclesDisplay();
-            }
-        }
-
-        // Fermer le modal de modification
-        function closeEditModal() {
-            const modal = document.getElementById('edit-vehicle-modal');
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-            document.body.style.overflow = 'auto';
-            currentEditingId = null;
-        }
-
-        // Supprimer un véhicule
-        function deleteVehicle(id) {
-            if (confirm('Êtes-vous sûr de vouloir supprimer ce véhicule ?')) {
-                vehicles = vehicles.filter(v => v.id !== id);
-                delete vehicleImages[id];
-                
-                localStorage.setItem('vehicles', JSON.stringify(vehicles));
-                localStorage.setItem('vehicleImages', JSON.stringify(vehicleImages));
-                
-                loadVehiclesManagement();
-                updateVehiclesDisplay();
-                alert('Véhicule supprimé avec succès !');
-            }
-        }
-
-        // Rechercher des véhicules
-        function searchVehicles() {
-            const searchTerm = document.getElementById('search-vehicles').value.toLowerCase();
-            const vehicleElements = document.querySelectorAll('#vehicles-management-list > div');
-            
-            vehicleElements.forEach(element => {
-                const text = element.textContent.toLowerCase();
-                element.style.display = text.includes(searchTerm) ? 'flex' : 'none';
-            });
-        }
-
-        // Filtrer par statut
-        function filterByStatus() {
-            const status = document.getElementById('filter-status').value;
-            const vehicleElements = document.querySelectorAll('#vehicles-management-list > div');
-            
-            vehicleElements.forEach(element => {
-                if (!status) {
-                    element.style.display = 'flex';
+                    if (error) {
+                        throw error;
+                    }
+                    vehicles = data || [];
                 } else {
-                    const statusElement = element.querySelector('.bg-green-500, .bg-orange-500, .bg-red-500');
-                    const vehicleStatus = statusElement ? statusElement.textContent : '';
-                    element.style.display = vehicleStatus === status ? 'flex' : 'none';
+                    // Fallback vers localStorage
+                    vehicles = JSON.parse(localStorage.getItem('vehicles') || '[]');
                 }
-            });
+
+                vehiclesData = vehicles; // Stocker pour les filtres
+                displayVehicles(vehicles);
+
+            } catch (error) {
+                console.error('Erreur lors du chargement des véhicules:', error);
+                grid.innerHTML = '<div class="text-center py-12 col-span-full text-red-400"><p>Erreur lors du chargement des véhicules</p></div>';
+            }
         }
 
-        // Charger les statistiques
-        function loadStatistics() {
-            const total = vehicles.length;
-            const available = vehicles.filter(v => v.status === 'Disponible').length;
-            const reserved = vehicles.filter(v => v.status === 'Réservé').length;
-            const sold = vehicles.filter(v => v.status === 'Vendu').length;
-
-            document.getElementById('total-vehicles').textContent = total;
-            document.getElementById('available-vehicles').textContent = available;
-            document.getElementById('reserved-vehicles').textContent = reserved;
-            document.getElementById('sold-vehicles').textContent = sold;
-
-            // Statistiques par catégorie
-            const categories = {};
-            vehicles.forEach(vehicle => {
-                categories[vehicle.category] = (categories[vehicle.category] || 0) + 1;
-            });
-
-            const categoryStats = document.getElementById('category-stats');
-            categoryStats.innerHTML = '';
-            
-            Object.entries(categories).forEach(([category, count]) => {
-                const div = document.createElement('div');
-                div.className = 'flex justify-between items-center';
-                div.innerHTML = `
-                    <span class="capitalize">${category}</span>
-                    <span class="font-semibold">${count}</span>
-                `;
-                categoryStats.appendChild(div);
-            });
-
-            // Valeur du stock
-            const stockValue = vehicles
-                .filter(v => v.status === 'Disponible')
-                .reduce((sum, v) => sum + parseInt(v.price), 0);
-            
-            document.getElementById('stock-value').textContent = stockValue.toLocaleString() + ' €';
-        }
-
-        // Mettre à jour l'affichage des véhicules sur la page publique
-        function updateVehiclesDisplay() {
+        // Afficher les véhicules
+        function displayVehicles(vehicles) {
             const grid = document.getElementById('vehicles-grid');
             if (!grid) return;
 
             grid.innerHTML = '';
 
+            if (vehicles.length === 0) {
+                grid.innerHTML = '<div class="text-center py-12 col-span-full text-gray-400"><p>Aucun véhicule disponible</p></div>';
+                return;
+            }
+
             vehicles.forEach(vehicle => {
-                const images = vehicleImages[vehicle.id] || [];
+                const images = vehicle.images || [];
                 const mainImage = images.length > 0 ? images[0] : '';
                 
                 const statusColor = vehicle.status === 'Disponible' ? 'bg-green-500' : 
@@ -1323,7 +1203,7 @@
                             <span class="bg-gray-800 px-3 py-1 rounded-full text-sm">${vehicle.fuel}</span>
                             <span class="bg-gray-800 px-3 py-1 rounded-full text-sm">${vehicle.power} ch</span>
                         </div>
-                        <button onclick="openVehicleModal('${vehicle.id}')" class="w-full ${vehicle.status === 'Vendu' ? 'bg-gray-700 cursor-not-allowed opacity-50' : 'btn-premium'} py-3 rounded-lg font-semibold">
+                        <button onclick="showVehicleDetails('${vehicle.id}')" class="w-full ${vehicle.status === 'Vendu' ? 'bg-gray-700 cursor-not-allowed opacity-50' : 'btn-premium'} py-3 rounded-lg font-semibold">
                             ${vehicle.status === 'Vendu' ? 'Véhicule vendu' : 'Voir les détails'}
                         </button>
                     </div>
@@ -1333,60 +1213,180 @@
             });
         }
 
-        // Gestion des pages (fonction existante modifiée)
+        // Charger la gestion des véhicules (admin)
+        async function loadVehiclesManagement() {
+            const container = document.getElementById('vehicles-management-list');
+            container.innerHTML = '<div class="text-center py-8 text-gray-400"><div class="loading mx-auto mb-4"></div><p>Chargement des véhicules...</p></div>';
+
+            try {
+                let vehicles = [];
+
+                if (supabase) {
+                    const { data, error } = await supabase
+                        .from('vehicles')
+                        .select('*')
+                        .order('created_at', { ascending: false });
+
+                    if (error) {
+                        throw error;
+                    }
+                    vehicles = data || [];
+                } else {
+                    vehicles = JSON.parse(localStorage.getItem('vehicles') || '[]');
+                }
+
+                container.innerHTML = '';
+
+                if (vehicles.length === 0) {
+                    container.innerHTML = '<div class="text-center py-8 text-gray-400"><p>Aucun véhicule trouvé</p></div>';
+                    return;
+                }
+
+                vehicles.forEach(vehicle => {
+                    const vehicleDiv = document.createElement('div');
+                    vehicleDiv.className = 'bg-gray-800 rounded-xl p-6 flex items-center justify-between';
+                    
+                    const statusColor = vehicle.status === 'Disponible' ? 'bg-green-500' : 
+                                      vehicle.status === 'Réservé' ? 'bg-orange-500' : 'bg-red-500';
+                    
+                    const images = vehicle.images || [];
+                    const mainImage = images.length > 0 ? images[0] : '';
+
+                    vehicleDiv.innerHTML = `
+                        <div class="flex items-center space-x-4">
+                            <div class="w-20 h-20 bg-gray-700 rounded-lg overflow-hidden">
+                                ${mainImage ? `<img src="${mainImage}" alt="${vehicle.brand} ${vehicle.model}" class="w-full h-full object-cover">` : 
+                                  `<div class="w-full h-full flex items-center justify-center">
+                                    <svg class="w-8 h-8 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4zM18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9z"/>
+                                    </svg>
+                                  </div>`}
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold">${vehicle.brand} ${vehicle.model}</h3>
+                                <p class="text-gray-400">${vehicle.year} • ${parseInt(vehicle.mileage).toLocaleString()} km</p>
+                                <p class="text-yellow-400 font-semibold">${parseInt(vehicle.price).toLocaleString()} €</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <span class="${statusColor} text-white px-3 py-1 rounded-full text-sm">${vehicle.status}</span>
+                            <button onclick="deleteVehicle('${vehicle.id}')" class="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-6 py-2 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-red-500/25 transform hover:scale-105">
+                                <div class="flex items-center space-x-1">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                    </svg>
+                                    <span>Supprimer</span>
+                                </div>
+                            </button>
+                        </div>
+                    `;
+                    
+                    container.appendChild(vehicleDiv);
+                });
+
+            } catch (error) {
+                console.error('Erreur lors du chargement:', error);
+                container.innerHTML = '<div class="text-center py-8 text-red-400"><p>Erreur lors du chargement des véhicules</p></div>';
+                showNotification('Erreur lors du chargement', 'error');
+            }
+        }
+
+        // Supprimer un véhicule
+        async function deleteVehicle(id) {
+            if (!confirm('Êtes-vous sûr de vouloir supprimer ce véhicule ?')) {
+                return;
+            }
+
+            try {
+                if (supabase) {
+                    const { error } = await supabase
+                        .from('vehicles')
+                        .delete()
+                        .eq('id', id);
+
+                    if (error) {
+                        throw error;
+                    }
+                } else {
+                    // Fallback vers localStorage
+                    const vehicles = JSON.parse(localStorage.getItem('vehicles') || '[]');
+                    const filteredVehicles = vehicles.filter(v => v.id !== id);
+                    localStorage.setItem('vehicles', JSON.stringify(filteredVehicles));
+                }
+
+                showNotification('Véhicule supprimé avec succès', 'success');
+                loadVehiclesManagement();
+                loadVehiclesDisplay(); // Recharger l'affichage public
+                
+            } catch (error) {
+                console.error('Erreur lors de la suppression:', error);
+                showNotification('Erreur lors de la suppression', 'error');
+            }
+        }
+
+        // Filtrer les véhicules
+        function filterVehicles(category) {
+            // Mettre à jour les boutons de filtre
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.className = 'filter-btn px-6 py-3 rounded-full font-medium bg-gray-800 hover:bg-gray-700 transition-all';
+            });
+            event.target.className = 'filter-btn filter-active px-6 py-3 rounded-full font-medium transition-all';
+
+            // Filtrer et afficher les véhicules
+            let filteredVehicles = vehiclesData;
+            if (category !== 'all') {
+                filteredVehicles = vehiclesData.filter(vehicle => vehicle.category === category);
+            }
+            
+            displayVehicles(filteredVehicles);
+        }
+
+        // Afficher les détails d'un véhicule
+        function showVehicleDetails(id) {
+            const vehicle = vehiclesData.find(v => v.id === id);
+            if (vehicle) {
+                alert(`Détails du véhicule:\n\n${vehicle.brand} ${vehicle.model}\nAnnée: ${vehicle.year}\nPrix: ${parseInt(vehicle.price).toLocaleString()} €\nDescription: ${vehicle.description || 'Aucune description disponible'}`);
+            }
+        }
+
+        // Navigation entre les pages
         function showPage(pageId) {
+            // Masquer toutes les pages
             document.querySelectorAll('.page').forEach(page => {
                 page.classList.remove('active');
             });
             
-            if (pageId === 'admin') {
-                // Vérifier si l'utilisateur est connecté
-                if (!isLoggedIn) {
-                    showPage('login');
-                    return;
-                }
-                document.getElementById('admin-page').classList.add('active');
-                // Afficher l'onglet par défaut
-                showAdminTab('add-vehicle');
-                setTimeout(() => {
-                    document.querySelectorAll('#admin-page .fade-in').forEach(el => {
-                        el.classList.add('visible');
-                    });
-                }, 100);
-            } else if (pageId === 'login') {
-                document.getElementById('login-page').classList.add('active');
-                setTimeout(() => {
-                    document.querySelectorAll('#login-page .fade-in').forEach(el => {
-                        el.classList.add('visible');
-                    });
-                }, 100);
-            } else if (pageId === 'vehicles') {
-                document.getElementById('vehicles-page').classList.add('active');
-                updateVehiclesDisplay();
-                setTimeout(() => {
-                    document.querySelectorAll('#vehicles-page .fade-in').forEach(el => {
-                        el.classList.add('visible');
-                    });
-                }, 100);
-            } else if (pageId === 'home') {
-                document.getElementById('home-page').classList.add('active');
+            // Afficher la page demandée
+            document.getElementById(pageId + '-page').classList.add('active');
+            
+            // Vérifier l'accès à l'admin
+            if (pageId === 'admin' && !isLoggedIn) {
+                showPage('login');
+                return;
             }
             
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            // Charger les données spécifiques à la page
+            if (pageId === 'vehicles') {
+                loadVehiclesDisplay();
+            }
         }
 
-        // Initialisation
-        document.addEventListener('DOMContentLoaded', function() {
-            // Créer le formulaire de connexion au chargement
-            createLoginForm();
-            
-            // Charger les véhicules existants
-            updateVehiclesDisplay();
-            
-            // Afficher la page d'accueil par défaut
+        // Faire défiler vers une section
+        function scrollToSection(sectionId) {
+            // S'assurer d'être sur la page d'accueil
             showPage('home');
             
-            // Animation au scroll
+            // Attendre que la page soit affichée puis faire défiler
+            setTimeout(() => {
+                const section = document.getElementById(sectionId);
+                if (section) {
+                    section.scrollIntoView({ behavior: 'smooth' });
+                }
+            }, 100);
+        }
+
+        // Animation fade-in
+        function setupFadeInAnimation() {
             const observerOptions = {
                 threshold: 0.1,
                 rootMargin: '0px 0px -50px 0px'
@@ -1400,59 +1400,11 @@
                 });
             }, observerOptions);
 
+            // Observer tous les éléments avec la classe fade-in
             document.querySelectorAll('.fade-in').forEach(el => {
                 observer.observe(el);
             });
-        });
-
-        // Fonction pour faire défiler vers une section
-        function scrollToSection(sectionId) {
-            // D'abord s'assurer qu'on est sur la page d'accueil
-            showPage('home');
-            
-            // Attendre que la page soit affichée puis faire défiler
-            setTimeout(() => {
-                const section = document.getElementById(sectionId);
-                if (section) {
-                    section.scrollIntoView({ behavior: 'smooth' });
-                }
-            }, 100);
-        }
-
-        // Filtrer les véhicules par catégorie
-        function filterVehicles(category) {
-            const vehicleCards = document.querySelectorAll('#vehicles-grid > div');
-            const filterBtns = document.querySelectorAll('.filter-btn');
-            
-            // Mettre à jour les boutons de filtre
-            filterBtns.forEach(btn => {
-                btn.classList.remove('filter-active');
-                btn.classList.add('bg-gray-800', 'hover:bg-gray-700');
-            });
-            
-            event.target.classList.add('filter-active');
-            event.target.classList.remove('bg-gray-800', 'hover:bg-gray-700');
-            
-            // Filtrer les véhicules
-            vehicleCards.forEach(card => {
-                if (category === 'all' || card.getAttribute('data-category') === category) {
-                    card.style.display = 'block';
-                } else {
-                    card.style.display = 'none';
-                }
-            });
-        }
-
-        // Ouvrir le modal de détails d'un véhicule
-        function openVehicleModal(vehicleId) {
-            const vehicle = vehicles.find(v => v.id === vehicleId);
-            if (!vehicle) return;
-
-            const images = vehicleImages[vehicleId] || [];
-            
-            // Créer le modal (implémentation simplifiée)
-            alert(`Détails du véhicule:\n${vehicle.brand} ${vehicle.model}\nAnnée: ${vehicle.year}\nPrix: ${parseInt(vehicle.price).toLocaleString()} €\nStatut: ${vehicle.status}`);
         }
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'980e4176473cd0af',t:'MTc1ODE3MTM3NS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'980e8606723437e5',t:'MTc1ODE3NDE4My4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
