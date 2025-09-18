@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GoAuto95 - Véhicules Premium d'Exception</title>
+    <title>GoAuto95 - Administration</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -11,10 +11,8 @@
         .hero-gradient { background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%); }
         .card-hover { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
         .card-hover:hover { transform: translateY(-8px); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
-        .parallax { transform: translateZ(0); }
         .fade-in { opacity: 0; transform: translateY(30px); transition: all 0.8s ease; }
         .fade-in.visible { opacity: 1; transform: translateY(0); }
-        .luxury-border { border: 1px solid rgba(212, 175, 55, 0.3); }
         .gold-accent { color: #d4af37; }
         .btn-premium { 
             background: linear-gradient(135deg, #d4af37 0%, #f4e4a6 100%);
@@ -26,13 +24,21 @@
             transform: translateY(-2px);
             box-shadow: 0 10px 25px rgba(212, 175, 55, 0.3);
         }
+        .nav-link { transition: all 0.3s ease; }
+        .nav-link:hover { color: #d4af37; }
+        .page { display: none; }
+        .page.active { display: block; }
         .vehicle-card { 
             background: linear-gradient(145deg, #1a1a2e 0%, #16213e 100%);
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
         .filter-active { background: linear-gradient(135deg, #d4af37 0%, #f4e4a6 100%); color: #0f0f23; }
-        .nav-link { transition: all 0.3s ease; }
-        .nav-link:hover { color: #d4af37; }
+        .luxury-border { border: 1px solid rgba(212, 175, 55, 0.3); }
+        .admin-panel { background: linear-gradient(145deg, #1a1a2e 0%, #16213e 100%); }
+        .drag-over { border-color: #d4af37; background-color: rgba(212, 175, 55, 0.1); }
+        .image-preview { position: relative; overflow: hidden; }
+        .image-preview img { width: 100%; height: 100%; object-fit: cover; }
+        .delete-image { position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,0.7); }
     </style>
 </head>
 <body class="bg-gray-900 text-white overflow-x-hidden">
@@ -40,18 +46,23 @@
     <nav class="fixed top-0 w-full z-50 bg-black/90 backdrop-blur-md border-b border-white/10">
         <div class="max-w-7xl mx-auto px-6 py-4">
             <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-2">
+                <div class="flex items-center space-x-2 cursor-pointer" onclick="showPage('home')">
                     <div class="w-10 h-10 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-lg flex items-center justify-center">
                         <span class="text-black font-bold text-lg">GA</span>
                     </div>
                     <span class="text-xl font-bold gold-accent">GoAuto95</span>
                 </div>
-                <div class="hidden md:flex items-center space-x-8">
-                    <a href="#accueil" class="nav-link">Accueil</a>
-                    <a href="#vehicules" class="nav-link">Véhicules</a>
-                    <a href="#services" class="nav-link">Services</a>
-                    <a href="#apropos" class="nav-link">À propos</a>
-                    <a href="#contact" class="nav-link">Contact</a>
+                <div class="hidden md:flex items-center justify-center flex-1">
+                    <div class="flex items-center space-x-8">
+                        <a href="#" onclick="showPage('home')" class="nav-link">Accueil</a>
+                        <a href="#" onclick="showPage('vehicles')" class="nav-link">Véhicules</a>
+                        <a href="#" onclick="scrollToSection('services')" class="nav-link">Services</a>
+                        <a href="#" onclick="scrollToSection('apropos')" class="nav-link">À propos</a>
+                        <a href="#" onclick="scrollToSection('contact')" class="nav-link">Contact</a>
+                    </div>
+                </div>
+                <div class="hidden md:flex">
+                    <a href="#" onclick="showPage('admin')" class="nav-link gold-accent bg-yellow-400/10 px-4 py-2 rounded-lg">Administration</a>
                 </div>
                 <button class="md:hidden text-white">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -62,513 +73,1119 @@
         </div>
     </nav>
 
-    <!-- Hero Section -->
-    <section id="accueil" class="hero-gradient min-h-screen flex items-center relative overflow-hidden">
-        <div class="absolute inset-0 bg-black/40"></div>
-        <div class="absolute inset-0 bg-gradient-to-r from-black/60 via-transparent to-black/60"></div>
-        
-        <!-- Background Video Placeholder -->
-        <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1920 1080%22><defs><linearGradient id=%22a%22 x1=%220%22 y1=%220%22 x2=%221%22 y2=%221%22><stop offset=%220%22 stop-color=%22%23000%22/><stop offset=%221%22 stop-color=%22%23333%22/></linearGradient></defs><rect width=%221920%22 height=%221080%22 fill=%22url(%23a)%22/><circle cx=%22960%22 cy=%22540%22 r=%22200%22 fill=%22%23d4af37%22 opacity=%220.1%22/></svg>')"></div>
-        
-        <div class="relative z-10 max-w-7xl mx-auto px-6 text-center">
-            <div class="fade-in">
-                <h1 class="text-5xl md:text-7xl font-light mb-6 leading-tight">
-                    L'Excellence <span class="gold-accent font-semibold">Automobile</span>
-                </h1>
-                <p class="text-xl md:text-2xl text-gray-300 mb-8 max-w-3xl mx-auto font-light">
-                    Découvrez notre sélection exclusive de véhicules premium, 
-                    choisis avec passion et expertise depuis plus de 15 ans
-                </p>
-                <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                    <button onclick="scrollToSection('vehicules')" class="btn-premium px-8 py-4 rounded-lg font-semibold text-lg">
-                        Découvrir nos véhicules
+    <!-- PAGE ADMINISTRATION -->
+    <div id="admin-page" class="page">
+        <section class="hero-gradient pt-24 pb-12">
+            <div class="max-w-7xl mx-auto px-6 text-center">
+                <div class="fade-in">
+                    <h1 class="text-2xl md:text-4xl font-light mb-6">
+                        <span class="gold-accent font-semibold">Administration</span>
+                    </h1>
+                    <p class="text-lg text-gray-300 mb-8 max-w-2xl mx-auto">
+                        Gérez votre inventaire de véhicules et vos offres
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <section class="py-20 bg-gray-900">
+            <div class="max-w-7xl mx-auto px-6">
+                <!-- Onglets Admin -->
+                <div class="flex flex-wrap justify-center gap-4 mb-12 fade-in">
+                    <button onclick="showAdminTab('add-vehicle')" class="admin-tab-btn filter-active px-6 py-3 rounded-full font-medium transition-all">
+                        Ajouter un véhicule
                     </button>
-                    <button onclick="scrollToSection('contact')" class="border-2 border-white/30 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-white/10 transition-all">
-                        Nous contacter
+                    <button onclick="showAdminTab('manage-vehicles')" class="admin-tab-btn px-6 py-3 rounded-full font-medium bg-gray-800 hover:bg-gray-700 transition-all">
+                        Gérer les véhicules
+                    </button>
+                    <button onclick="showAdminTab('statistics')" class="admin-tab-btn px-6 py-3 rounded-full font-medium bg-gray-800 hover:bg-gray-700 transition-all">
+                        Statistiques
                     </button>
                 </div>
-            </div>
-        </div>
-        
-        <!-- Scroll Indicator -->
-        <div class="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
-            <svg class="w-6 h-6 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
-            </svg>
-        </div>
-    </section>
 
-    <!-- Véhicules Section -->
-    <section id="vehicules" class="py-20 bg-gray-900">
-        <div class="max-w-7xl mx-auto px-6">
-            <div class="text-center mb-16 fade-in">
-                <h2 class="text-4xl md:text-5xl font-light mb-6">Notre <span class="gold-accent">Collection</span></h2>
-                <p class="text-xl text-gray-400 max-w-2xl mx-auto">
-                    Chaque véhicule est soigneusement sélectionné et contrôlé par nos experts
-                </p>
-            </div>
+                <!-- Onglet Ajouter un véhicule -->
+                <div id="add-vehicle-tab" class="admin-tab active">
+                    <div class="admin-panel rounded-2xl p-8 luxury-border">
+                        <h2 class="text-2xl font-semibold mb-8 gold-accent">Ajouter un nouveau véhicule</h2>
+                        
+                        <form id="add-vehicle-form" onsubmit="addVehicle(event)" class="space-y-6">
+                            <!-- Informations de base -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Marque *</label>
+                                    <input type="text" name="brand" required class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Modèle *</label>
+                                    <input type="text" name="model" required class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors">
+                                </div>
+                            </div>
 
-            <!-- Filtres -->
-            <div class="flex flex-wrap justify-center gap-4 mb-12 fade-in">
-                <button onclick="filterVehicles('all')" class="filter-btn filter-active px-6 py-3 rounded-full font-medium transition-all">
-                    Tous
-                </button>
-                <button onclick="filterVehicles('premium')" class="filter-btn px-6 py-3 rounded-full font-medium bg-gray-800 hover:bg-gray-700 transition-all">
-                    Premium
-                </button>
-                <button onclick="filterVehicles('sport')" class="filter-btn px-6 py-3 rounded-full font-medium bg-gray-800 hover:bg-gray-700 transition-all">
-                    Sport
-                </button>
-                <button onclick="filterVehicles('suv')" class="filter-btn px-6 py-3 rounded-full font-medium bg-gray-800 hover:bg-gray-700 transition-all">
-                    SUV
-                </button>
-                <button onclick="filterVehicles('berline')" class="filter-btn px-6 py-3 rounded-full font-medium bg-gray-800 hover:bg-gray-700 transition-all">
-                    Berline
-                </button>
-            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Année *</label>
+                                    <input type="number" name="year" min="2000" max="2024" required class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Kilométrage *</label>
+                                    <input type="number" name="mileage" required class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Prix (€) *</label>
+                                    <input type="number" name="price" required class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors">
+                                </div>
+                            </div>
 
-            <!-- Grille de véhicules -->
-            <div id="vehicles-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <!-- Véhicule 1 -->
-                <div class="vehicle-card card-hover rounded-2xl overflow-hidden fade-in" data-category="premium">
-                    <div class="relative h-64 bg-gradient-to-br from-gray-700 to-gray-800 overflow-hidden">
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-                        <div class="absolute top-4 right-4 bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium">
-                            Disponible
-                        </div>
-                        <!-- Placeholder pour image véhicule -->
-                        <div class="w-full h-full flex items-center justify-center">
-                            <svg class="w-24 h-24 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4zM18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z"/>
-                            </svg>
-                        </div>
-                    </div>
-                    <div class="p-6">
-                        <div class="flex justify-between items-start mb-4">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Carburant *</label>
+                                    <select name="fuel" required class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors">
+                                        <option value="">Sélectionner</option>
+                                        <option value="Essence">Essence</option>
+                                        <option value="Diesel">Diesel</option>
+                                        <option value="Hybride">Hybride</option>
+                                        <option value="Hybride rechargeable">Hybride rechargeable</option>
+                                        <option value="Électrique">Électrique</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Transmission *</label>
+                                    <select name="transmission" required class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors">
+                                        <option value="">Sélectionner</option>
+                                        <option value="Manuelle">Manuelle</option>
+                                        <option value="Automatique">Automatique</option>
+                                        <option value="Semi-automatique">Semi-automatique</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Puissance (ch) *</label>
+                                    <input type="number" name="power" required class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Catégorie *</label>
+                                    <select name="category" required class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors">
+                                        <option value="">Sélectionner</option>
+                                        <option value="premium">Premium</option>
+                                        <option value="sport">Sport</option>
+                                        <option value="suv">SUV</option>
+                                        <option value="berline">Berline</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Statut *</label>
+                                    <select name="status" required class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors">
+                                        <option value="Disponible">Disponible</option>
+                                        <option value="Réservé">Réservé</option>
+                                        <option value="Vendu">Vendu</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Upload d'images -->
                             <div>
-                                <h3 class="text-xl font-semibold mb-1">Mercedes-Benz Classe S</h3>
-                                <p class="text-gray-400">2022 • 15 000 km</p>
+                                <label class="block text-sm font-medium mb-4">Images du véhicule</label>
+                                <div class="border-2 border-dashed border-gray-600 rounded-lg p-8 text-center hover:border-yellow-400 transition-colors" 
+                                     id="image-drop-zone"
+                                     ondrop="handleDrop(event)" 
+                                     ondragover="handleDragOver(event)" 
+                                     ondragleave="handleDragLeave(event)">
+                                    <svg class="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                                    </svg>
+                                    <p class="text-gray-400 mb-2">Glissez-déposez vos images ici ou</p>
+                                    <button type="button" onclick="document.getElementById('image-input').click()" class="btn-premium px-6 py-2 rounded-lg font-medium">
+                                        Parcourir les fichiers
+                                    </button>
+                                    <input type="file" id="image-input" multiple accept="image/*" class="hidden" onchange="handleFileSelect(event)">
+                                    <p class="text-xs text-gray-500 mt-2">PNG, JPG, JPEG jusqu'à 5MB chacune</p>
+                                </div>
+                                
+                                <!-- Aperçu des images -->
+                                <div id="image-preview-container" class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 hidden">
+                                    <!-- Les aperçus d'images seront ajoutés ici -->
+                                </div>
                             </div>
-                            <div class="text-right">
-                                <p class="text-2xl font-bold gold-accent">89 900 €</p>
-                            </div>
-                        </div>
-                        <div class="flex flex-wrap gap-2 mb-4">
-                            <span class="bg-gray-800 px-3 py-1 rounded-full text-sm">Automatique</span>
-                            <span class="bg-gray-800 px-3 py-1 rounded-full text-sm">Diesel</span>
-                            <span class="bg-gray-800 px-3 py-1 rounded-full text-sm">Pack AMG</span>
-                        </div>
-                        <button onclick="openVehicleModal('mercedes-s')" class="w-full btn-premium py-3 rounded-lg font-semibold">
-                            Voir les détails
-                        </button>
-                    </div>
-                </div>
 
-                <!-- Véhicule 2 -->
-                <div class="vehicle-card card-hover rounded-2xl overflow-hidden fade-in" data-category="sport">
-                    <div class="relative h-64 bg-gradient-to-br from-red-900 to-gray-800 overflow-hidden">
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-                        <div class="absolute top-4 right-4 bg-orange-500 text-white px-3 py-1 rounded-full text-sm font-medium">
-                            Réservé
-                        </div>
-                        <div class="w-full h-full flex items-center justify-center">
-                            <svg class="w-24 h-24 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4zM18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z"/>
-                            </svg>
-                        </div>
-                    </div>
-                    <div class="p-6">
-                        <div class="flex justify-between items-start mb-4">
+                            <!-- Équipements -->
                             <div>
-                                <h3 class="text-xl font-semibold mb-1">BMW M4 Competition</h3>
-                                <p class="text-gray-400">2023 • 8 500 km</p>
+                                <label class="block text-sm font-medium mb-4">Équipements principaux</label>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div class="space-y-2">
+                                        <label class="flex items-center space-x-2">
+                                            <input type="checkbox" name="features" value="Climatisation automatique" class="rounded bg-gray-800 border-gray-600 text-yellow-400 focus:ring-yellow-400">
+                                            <span>Climatisation automatique</span>
+                                        </label>
+                                        <label class="flex items-center space-x-2">
+                                            <input type="checkbox" name="features" value="GPS intégré" class="rounded bg-gray-800 border-gray-600 text-yellow-400 focus:ring-yellow-400">
+                                            <span>GPS intégré</span>
+                                        </label>
+                                        <label class="flex items-center space-x-2">
+                                            <input type="checkbox" name="features" value="Sièges chauffants" class="rounded bg-gray-800 border-gray-600 text-yellow-400 focus:ring-yellow-400">
+                                            <span>Sièges chauffants</span>
+                                        </label>
+                                        <label class="flex items-center space-x-2">
+                                            <input type="checkbox" name="features" value="Toit ouvrant" class="rounded bg-gray-800 border-gray-600 text-yellow-400 focus:ring-yellow-400">
+                                            <span>Toit ouvrant</span>
+                                        </label>
+                                        <label class="flex items-center space-x-2">
+                                            <input type="checkbox" name="features" value="Caméra de recul" class="rounded bg-gray-800 border-gray-600 text-yellow-400 focus:ring-yellow-400">
+                                            <span>Caméra de recul</span>
+                                        </label>
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="flex items-center space-x-2">
+                                            <input type="checkbox" name="features" value="Système audio premium" class="rounded bg-gray-800 border-gray-600 text-yellow-400 focus:ring-yellow-400">
+                                            <span>Système audio premium</span>
+                                        </label>
+                                        <label class="flex items-center space-x-2">
+                                            <input type="checkbox" name="features" value="Jantes alliage" class="rounded bg-gray-800 border-gray-600 text-yellow-400 focus:ring-yellow-400">
+                                            <span>Jantes alliage</span>
+                                        </label>
+                                        <label class="flex items-center space-x-2">
+                                            <input type="checkbox" name="features" value="Éclairage LED" class="rounded bg-gray-800 border-gray-600 text-yellow-400 focus:ring-yellow-400">
+                                            <span>Éclairage LED</span>
+                                        </label>
+                                        <label class="flex items-center space-x-2">
+                                            <input type="checkbox" name="features" value="Régulateur de vitesse" class="rounded bg-gray-800 border-gray-600 text-yellow-400 focus:ring-yellow-400">
+                                            <span>Régulateur de vitesse</span>
+                                        </label>
+                                        <label class="flex items-center space-x-2">
+                                            <input type="checkbox" name="features" value="Aide au stationnement" class="rounded bg-gray-800 border-gray-600 text-yellow-400 focus:ring-yellow-400">
+                                            <span>Aide au stationnement</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <!-- Équipement personnalisé -->
+                                <div class="mt-4">
+                                    <label class="block text-sm font-medium mb-2">Équipement personnalisé</label>
+                                    <div class="flex gap-2">
+                                        <input type="text" id="custom-feature" placeholder="Ajouter un équipement..." class="flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors">
+                                        <button type="button" onclick="addCustomFeature()" class="btn-premium px-4 py-2 rounded-lg font-medium">
+                                            Ajouter
+                                        </button>
+                                    </div>
+                                    <div id="custom-features-list" class="mt-2 space-y-1">
+                                        <!-- Les équipements personnalisés seront ajoutés ici -->
+                                    </div>
+                                </div>
                             </div>
-                            <div class="text-right">
-                                <p class="text-2xl font-bold gold-accent">95 500 €</p>
-                            </div>
-                        </div>
-                        <div class="flex flex-wrap gap-2 mb-4">
-                            <span class="bg-gray-800 px-3 py-1 rounded-full text-sm">Manuelle</span>
-                            <span class="bg-gray-800 px-3 py-1 rounded-full text-sm">Essence</span>
-                            <span class="bg-gray-800 px-3 py-1 rounded-full text-sm">510 ch</span>
-                        </div>
-                        <button onclick="openVehicleModal('bmw-m4')" class="w-full btn-premium py-3 rounded-lg font-semibold">
-                            Voir les détails
-                        </button>
-                    </div>
-                </div>
 
-                <!-- Véhicule 3 -->
-                <div class="vehicle-card card-hover rounded-2xl overflow-hidden fade-in" data-category="suv">
-                    <div class="relative h-64 bg-gradient-to-br from-blue-900 to-gray-800 overflow-hidden">
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-                        <div class="absolute top-4 right-4 bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium">
-                            Disponible
-                        </div>
-                        <div class="w-full h-full flex items-center justify-center">
-                            <svg class="w-24 h-24 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4zM18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z"/>
-                            </svg>
-                        </div>
-                    </div>
-                    <div class="p-6">
-                        <div class="flex justify-between items-start mb-4">
+                            <!-- Description -->
                             <div>
-                                <h3 class="text-xl font-semibold mb-1">Audi Q8 S-Line</h3>
-                                <p class="text-gray-400">2022 • 22 000 km</p>
+                                <label class="block text-sm font-medium mb-2">Description détaillée</label>
+                                <textarea name="description" rows="4" class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors resize-none" placeholder="Décrivez les particularités de ce véhicule..."></textarea>
                             </div>
-                            <div class="text-right">
-                                <p class="text-2xl font-bold gold-accent">78 900 €</p>
+
+                            <!-- Boutons -->
+                            <div class="flex gap-4 pt-6">
+                                <button type="submit" class="flex-1 btn-premium py-4 rounded-lg font-semibold text-lg">
+                                    Ajouter le véhicule
+                                </button>
+                                <button type="button" onclick="resetForm()" class="px-8 py-4 border-2 border-gray-600 rounded-lg font-semibold hover:bg-gray-800 transition-colors">
+                                    Réinitialiser
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Onglet Gérer les véhicules -->
+                <div id="manage-vehicles-tab" class="admin-tab">
+                    <div class="admin-panel rounded-2xl p-8 luxury-border">
+                        <div class="flex justify-between items-center mb-8">
+                            <h2 class="text-2xl font-semibold gold-accent">Gérer les véhicules</h2>
+                            <div class="flex gap-4">
+                                <input type="text" id="search-vehicles" placeholder="Rechercher..." class="px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors" onkeyup="searchVehicles()">
+                                <select id="filter-status" onchange="filterByStatus()" class="px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors">
+                                    <option value="">Tous les statuts</option>
+                                    <option value="Disponible">Disponible</option>
+                                    <option value="Réservé">Réservé</option>
+                                    <option value="Vendu">Vendu</option>
+                                </select>
                             </div>
                         </div>
-                        <div class="flex flex-wrap gap-2 mb-4">
-                            <span class="bg-gray-800 px-3 py-1 rounded-full text-sm">Automatique</span>
-                            <span class="bg-gray-800 px-3 py-1 rounded-full text-sm">Diesel</span>
-                            <span class="bg-gray-800 px-3 py-1 rounded-full text-sm">Quattro</span>
+
+                        <!-- Liste des véhicules -->
+                        <div id="vehicles-management-list" class="space-y-4">
+                            <!-- Les véhicules seront affichés ici -->
                         </div>
-                        <button onclick="openVehicleModal('audi-q8')" class="w-full btn-premium py-3 rounded-lg font-semibold">
-                            Voir les détails
-                        </button>
+                    </div>
+                </div>
+
+                <!-- Onglet Statistiques -->
+                <div id="statistics-tab" class="admin-tab">
+                    <div class="admin-panel rounded-2xl p-8 luxury-border">
+                        <h2 class="text-2xl font-semibold mb-8 gold-accent">Statistiques</h2>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                            <div class="bg-gray-800 rounded-xl p-6 text-center">
+                                <div class="text-3xl font-bold gold-accent mb-2" id="total-vehicles">0</div>
+                                <div class="text-gray-400">Total véhicules</div>
+                            </div>
+                            <div class="bg-gray-800 rounded-xl p-6 text-center">
+                                <div class="text-3xl font-bold text-green-400 mb-2" id="available-vehicles">0</div>
+                                <div class="text-gray-400">Disponibles</div>
+                            </div>
+                            <div class="bg-gray-800 rounded-xl p-6 text-center">
+                                <div class="text-3xl font-bold text-orange-400 mb-2" id="reserved-vehicles">0</div>
+                                <div class="text-gray-400">Réservés</div>
+                            </div>
+                            <div class="bg-gray-800 rounded-xl p-6 text-center">
+                                <div class="text-3xl font-bold text-red-400 mb-2" id="sold-vehicles">0</div>
+                                <div class="text-gray-400">Vendus</div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div class="bg-gray-800 rounded-xl p-6">
+                                <h3 class="text-xl font-semibold mb-4">Répartition par catégorie</h3>
+                                <div id="category-stats" class="space-y-3">
+                                    <!-- Statistiques par catégorie -->
+                                </div>
+                            </div>
+                            <div class="bg-gray-800 rounded-xl p-6">
+                                <h3 class="text-xl font-semibold mb-4">Valeur du stock</h3>
+                                <div class="text-3xl font-bold gold-accent mb-2" id="stock-value">0 €</div>
+                                <div class="text-gray-400">Valeur totale des véhicules disponibles</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-    </section>
+        </section>
+    </div>
 
-    <!-- Services Section -->
-    <section id="services" class="py-20 bg-black">
-        <div class="max-w-7xl mx-auto px-6">
-            <div class="text-center mb-16 fade-in">
-                <h2 class="text-4xl md:text-5xl font-light mb-6">Nos <span class="gold-accent">Services</span></h2>
-                <p class="text-xl text-gray-400 max-w-2xl mx-auto">
-                    Un accompagnement complet pour votre projet automobile
-                </p>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                <div class="text-center fade-in">
-                    <div class="w-16 h-16 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                        <svg class="w-8 h-8 text-black" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                    </div>
-                    <h3 class="text-xl font-semibold mb-4">Garantie Premium</h3>
-                    <p class="text-gray-400">Tous nos véhicules bénéficient d'une garantie étendue jusqu'à 24 mois</p>
-                </div>
-
-                <div class="text-center fade-in">
-                    <div class="w-16 h-16 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                        <svg class="w-8 h-8 text-black" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z"/>
-                        </svg>
-                    </div>
-                    <h3 class="text-xl font-semibold mb-4">Financement</h3>
-                    <p class="text-gray-400">Solutions de financement personnalisées avec nos partenaires bancaires</p>
-                </div>
-
-                <div class="text-center fade-in">
-                    <div class="w-16 h-16 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                        <svg class="w-8 h-8 text-black" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z"/>
-                        </svg>
-                    </div>
-                    <h3 class="text-xl font-semibold mb-4">Reprise</h3>
-                    <p class="text-gray-400">Évaluation gratuite et reprise de votre véhicule actuel au meilleur prix</p>
-                </div>
-
-                <div class="text-center fade-in">
-                    <div class="w-16 h-16 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                        <svg class="w-8 h-8 text-black" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z"/>
-                        </svg>
-                    </div>
-                    <h3 class="text-xl font-semibold mb-4">Expertise</h3>
-                    <p class="text-gray-400">Plus de 15 ans d'expérience dans l'automobile premium et de luxe</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- À propos Section -->
-    <section id="apropos" class="py-20 bg-gray-900">
-        <div class="max-w-7xl mx-auto px-6">
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+    <!-- PAGE ACCUEIL -->
+    <div id="home-page" class="page active">
+        <!-- Hero Section -->
+        <section class="hero-gradient min-h-screen flex items-center justify-center relative overflow-hidden">
+            <div class="absolute inset-0 bg-black/20"></div>
+            <div class="max-w-7xl mx-auto px-6 text-center relative z-10">
                 <div class="fade-in">
-                    <h2 class="text-4xl md:text-5xl font-light mb-6">Notre <span class="gold-accent">Histoire</span></h2>
-                    <p class="text-xl text-gray-300 mb-6 leading-relaxed">
-                        Depuis 2008, GoAuto95 s'est imposé comme une référence dans la vente de véhicules premium 
-                        dans le Val-d'Oise. Notre passion pour l'automobile d'exception nous guide dans la sélection 
-                        rigoureuse de chaque véhicule.
+                    <h1 class="text-3xl md:text-5xl font-light mb-6">
+                        Votre <span class="gold-accent font-semibold">Véhicule Premium</span><br>
+                        Vous Attend
+                    </h1>
+                    <p class="text-lg md:text-xl text-gray-300 mb-12 max-w-3xl mx-auto">
+                        Découvrez notre sélection exclusive de véhicules d'exception, 
+                        soigneusement choisis pour leur qualité et leur performance.
                     </p>
-                    <p class="text-lg text-gray-400 mb-8 leading-relaxed">
-                        Chaque voiture de notre showroom est choisie selon des critères stricts : historique complet, 
-                        entretien suivi, état irréprochable. Notre équipe d'experts vous accompagne dans votre projet 
-                        avec transparence et professionnalisme.
-                    </p>
-                    
-                    <!-- Réseaux sociaux -->
-                    <div class="flex items-center space-x-6">
-                        <span class="text-gray-400">Suivez-nous :</span>
-                        <a href="#" class="text-white hover:text-yellow-400 transition-colors">
-                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"/>
-                            </svg>
-                        </a>
-                        <a href="#" class="text-white hover:text-yellow-400 transition-colors">
-                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M12.017 0C5.396 0 .029 5.367.029 11.987c0 5.079 3.158 9.417 7.618 11.174-.105-.949-.199-2.403.041-3.439.219-.937 1.406-5.957 1.406-5.957s-.359-.72-.359-1.781c0-1.663.967-2.911 2.168-2.911 1.024 0 1.518.769 1.518 1.688 0 1.029-.653 2.567-.992 3.992-.285 1.193.6 2.165 1.775 2.165 2.128 0 3.768-2.245 3.768-5.487 0-2.861-2.063-4.869-5.008-4.869-3.41 0-5.409 2.562-5.409 5.199 0 1.033.394 2.143.889 2.741.099.12.112.225.085.347-.09.375-.293 1.199-.334 1.363-.053.225-.172.271-.402.165-1.495-.69-2.433-2.878-2.433-4.646 0-3.776 2.748-7.252 7.92-7.252 4.158 0 7.392 2.967 7.392 6.923 0 4.135-2.607 7.462-6.233 7.462-1.214 0-2.357-.629-2.75-1.378l-.748 2.853c-.271 1.043-1.002 2.35-1.492 3.146C9.57 23.812 10.763 24.009 12.017 24.009c6.624 0 11.99-5.367 11.99-11.988C24.007 5.367 18.641.001.012.001z"/>
-                            </svg>
-                        </a>
-                        <a href="#" class="text-white hover:text-yellow-400 transition-colors">
-                            <span class="font-bold">@goauto95</span>
-                        </a>
-                    </div>
-                </div>
-                
-                <div class="fade-in">
-                    <div class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-8 luxury-border">
-                        <h3 class="text-2xl font-semibold mb-6 gold-accent">Nos Engagements</h3>
-                        <div class="space-y-4">
-                            <div class="flex items-center space-x-4">
-                                <div class="w-3 h-3 bg-yellow-400 rounded-full"></div>
-                                <span>Contrôle technique approfondi de chaque véhicule</span>
-                            </div>
-                            <div class="flex items-center space-x-4">
-                                <div class="w-3 h-3 bg-yellow-400 rounded-full"></div>
-                                <span>Historique complet et transparent</span>
-                            </div>
-                            <div class="flex items-center space-x-4">
-                                <div class="w-3 h-3 bg-yellow-400 rounded-full"></div>
-                                <span>Garantie étendue sur tous nos véhicules</span>
-                            </div>
-                            <div class="flex items-center space-x-4">
-                                <div class="w-3 h-3 bg-yellow-400 rounded-full"></div>
-                                <span>Service après-vente personnalisé</span>
-                            </div>
-                            <div class="flex items-center space-x-4">
-                                <div class="w-3 h-3 bg-yellow-400 rounded-full"></div>
-                                <span>Accompagnement financement et assurance</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Contact Section -->
-    <section id="contact" class="py-20 bg-black">
-        <div class="max-w-7xl mx-auto px-6">
-            <div class="text-center mb-16 fade-in">
-                <h2 class="text-4xl md:text-5xl font-light mb-6">Nous <span class="gold-accent">Contacter</span></h2>
-                <p class="text-xl text-gray-400 max-w-2xl mx-auto">
-                    Notre équipe est à votre disposition pour répondre à toutes vos questions
-                </p>
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-16">
-                <!-- Informations de contact -->
-                <div class="fade-in">
-                    <div class="space-y-8">
-                        <div class="flex items-start space-x-4">
-                            <div class="w-12 h-12 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-xl flex items-center justify-center flex-shrink-0">
-                                <svg class="w-6 h-6 text-black" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
-                                </svg>
-                            </div>
-                            <div>
-                                <h3 class="text-xl font-semibold mb-2">Adresse</h3>
-                                <p class="text-gray-400">123 Avenue de la République<br>95100 Argenteuil, France</p>
-                            </div>
-                        </div>
-
-                        <div class="flex items-start space-x-4">
-                            <div class="w-12 h-12 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-xl flex items-center justify-center flex-shrink-0">
-                                <svg class="w-6 h-6 text-black" fill="currentColor" viewBox="0 0 20 20">
-                                    <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/>
-                                </svg>
-                            </div>
-                            <div>
-                                <h3 class="text-xl font-semibold mb-2">Téléphone</h3>
-                                <p class="text-gray-400">01 39 61 XX XX<br>06 XX XX XX XX</p>
-                            </div>
-                        </div>
-
-                        <div class="flex items-start space-x-4">
-                            <div class="w-12 h-12 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-xl flex items-center justify-center flex-shrink-0">
-                                <svg class="w-6 h-6 text-black" fill="currentColor" viewBox="0 0 20 20">
-                                    <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
-                                    <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/>
-                                </svg>
-                            </div>
-                            <div>
-                                <h3 class="text-xl font-semibold mb-2">Horaires</h3>
-                                <p class="text-gray-400">Lun - Ven : 9h00 - 19h00<br>Samedi : 9h00 - 18h00<br>Dimanche : Sur rendez-vous</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Formulaire de contact -->
-                <div class="fade-in">
-                    <form class="space-y-6" onsubmit="submitContactForm(event)">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label class="block text-sm font-medium mb-2">Prénom *</label>
-                                <input type="text" required class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-2">Nom *</label>
-                                <input type="text" required class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors">
-                            </div>
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium mb-2">Email *</label>
-                            <input type="email" required class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors">
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium mb-2">Téléphone</label>
-                            <input type="tel" class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors">
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium mb-2">Sujet</label>
-                            <select class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors">
-                                <option>Demande d'information</option>
-                                <option>Demande de devis</option>
-                                <option>Reprise de véhicule</option>
-                                <option>Financement</option>
-                                <option>Autre</option>
-                            </select>
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium mb-2">Message *</label>
-                            <textarea required rows="5" class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors resize-none"></textarea>
-                        </div>
-                        
-                        <button type="submit" class="w-full btn-premium py-4 rounded-lg font-semibold text-lg">
-                            Envoyer le message
+                    <div class="flex flex-col sm:flex-row gap-6 justify-center">
+                        <button onclick="showPage('vehicles')" class="btn-premium px-6 py-3 rounded-full text-base font-semibold">
+                            Découvrir nos véhicules
                         </button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Footer -->
-    <footer class="bg-gray-900 border-t border-gray-800 py-12">
-        <div class="max-w-7xl mx-auto px-6">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
-                <div>
-                    <div class="flex items-center space-x-2 mb-4">
-                        <div class="w-8 h-8 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-lg flex items-center justify-center">
-                            <span class="text-black font-bold text-sm">GA</span>
-                        </div>
-                        <span class="text-lg font-bold gold-accent">GoAuto95</span>
+                        <button onclick="scrollToSection('contact')" class="border-2 border-white/30 hover:border-yellow-400 px-6 py-3 rounded-full text-base font-semibold transition-all hover:bg-white/10">
+                            Nous contacter
+                        </button>
                     </div>
-                    <p class="text-gray-400 text-sm">
-                        Votre spécialiste en véhicules premium depuis 2008. 
-                        Excellence, transparence et service client au cœur de nos valeurs.
-                    </p>
-                </div>
-                
-                <div>
-                    <h4 class="font-semibold mb-4">Navigation</h4>
-                    <ul class="space-y-2 text-sm text-gray-400">
-                        <li><a href="#accueil" class="hover:text-white transition-colors">Accueil</a></li>
-                        <li><a href="#vehicules" class="hover:text-white transition-colors">Véhicules</a></li>
-                        <li><a href="#services" class="hover:text-white transition-colors">Services</a></li>
-                        <li><a href="#apropos" class="hover:text-white transition-colors">À propos</a></li>
-                        <li><a href="#contact" class="hover:text-white transition-colors">Contact</a></li>
-                    </ul>
-                </div>
-                
-                <div>
-                    <h4 class="font-semibold mb-4">Services</h4>
-                    <ul class="space-y-2 text-sm text-gray-400">
-                        <li>Vente de véhicules premium</li>
-                        <li>Reprise et échange</li>
-                        <li>Financement personnalisé</li>
-                        <li>Garantie étendue</li>
-                        <li>Service après-vente</li>
-                    </ul>
-                </div>
-                
-                <div>
-                    <h4 class="font-semibold mb-4">Contact</h4>
-                    <ul class="space-y-2 text-sm text-gray-400">
-                        <li>123 Avenue de la République</li>
-                        <li>95100 Argenteuil</li>
-                        <li>01 39 61 XX XX</li>
-                        <li>contact@goauto95.fr</li>
-                    </ul>
                 </div>
             </div>
             
-            <div class="border-t border-gray-800 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
-                <p class="text-gray-400 text-sm">© 2024 GoAuto95. Tous droits réservés.</p>
-                <div class="flex space-x-6 mt-4 md:mt-0">
-                    <a href="#" class="text-gray-400 hover:text-white text-sm transition-colors">Mentions légales</a>
-                    <a href="#" class="text-gray-400 hover:text-white text-sm transition-colors">Politique de confidentialité</a>
-                    <a href="#" class="text-gray-400 hover:text-white text-sm transition-colors">CGV</a>
+            <!-- Éléments décoratifs -->
+            <div class="absolute top-20 left-10 w-32 h-32 bg-yellow-400/10 rounded-full blur-xl"></div>
+            <div class="absolute bottom-20 right-10 w-48 h-48 bg-yellow-400/5 rounded-full blur-2xl"></div>
+        </section>
+
+        <!-- Section Services -->
+        <section id="services" class="py-20 bg-gray-900">
+            <div class="max-w-7xl mx-auto px-6">
+                <div class="text-center mb-16 fade-in">
+                    <h2 class="text-2xl md:text-3xl font-light mb-6">
+                        Nos <span class="gold-accent font-semibold">Services</span>
+                    </h2>
+                    <p class="text-lg text-gray-400 max-w-2xl mx-auto">
+                        Une expérience complète pour l'achat de votre véhicule premium
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="vehicle-card card-hover p-8 rounded-2xl text-center fade-in">
+                        <div class="w-16 h-16 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                            <svg class="w-8 h-8 text-black" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold mb-4">Garantie Premium</h3>
+                        <p class="text-gray-400">Tous nos véhicules sont garantis et certifiés par nos experts.</p>
+                    </div>
+
+                    <div class="vehicle-card card-hover p-8 rounded-2xl text-center fade-in">
+                        <div class="w-16 h-16 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                            <svg class="w-8 h-8 text-black" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold mb-4">Financement</h3>
+                        <p class="text-gray-400">Solutions de financement flexibles adaptées à vos besoins.</p>
+                    </div>
+
+                    <div class="vehicle-card card-hover p-8 rounded-2xl text-center fade-in">
+                        <div class="w-16 h-16 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                            <svg class="w-8 h-8 text-black" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/>
+                                <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold mb-4">Support 24/7</h3>
+                        <p class="text-gray-400">Notre équipe est disponible pour vous accompagner à tout moment.</p>
+                    </div>
                 </div>
             </div>
-        </div>
-    </footer>
+        </section>
 
-    <!-- Modal véhicule -->
-    <div id="vehicle-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <!-- Section À propos -->
+        <section id="apropos" class="py-20 bg-gray-800">
+            <div class="max-w-7xl mx-auto px-6">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                    <div class="fade-in">
+                        <h2 class="text-2xl md:text-3xl font-light mb-6">
+                            À propos de <span class="gold-accent font-semibold">GoAuto95</span>
+                        </h2>
+                        <p class="text-lg text-gray-300 mb-6">
+                            Depuis plus de 15 ans, GoAuto95 est votre partenaire de confiance pour l'acquisition 
+                            de véhicules premium dans le Val-d'Oise. Notre expertise et notre passion nous permettent 
+                            de vous proposer une sélection rigoureuse des meilleurs véhicules du marché.
+                        </p>
+                        <p class="text-lg text-gray-300 mb-8">
+                            Chaque véhicule est minutieusement inspecté par nos experts pour garantir 
+                            la qualité et la fiabilité que vous méritez.
+                        </p>
+                        <div class="grid grid-cols-2 gap-6">
+                            <div class="text-center">
+                                <div class="text-3xl font-bold gold-accent mb-2">500+</div>
+                                <div class="text-gray-400">Véhicules vendus</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-3xl font-bold gold-accent mb-2">15+</div>
+                                <div class="text-gray-400">Années d'expérience</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="fade-in">
+                        <div class="bg-gradient-to-br from-yellow-400/20 to-yellow-600/20 rounded-2xl p-8 luxury-border">
+                            <div class="text-center">
+                                <div class="w-24 h-24 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                                    <span class="text-black font-bold text-2xl">GA</span>
+                                </div>
+                                <h3 class="text-2xl font-semibold mb-4">Notre Engagement</h3>
+                                <p class="text-gray-300">
+                                    Transparence, qualité et satisfaction client sont au cœur de nos valeurs. 
+                                    Nous nous engageons à vous offrir une expérience d'achat exceptionnelle.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section Contact -->
+        <section id="contact" class="py-20 bg-gray-900">
+            <div class="max-w-7xl mx-auto px-6">
+                <div class="text-center mb-16 fade-in">
+                    <h2 class="text-2xl md:text-3xl font-light mb-6">
+                        Contactez <span class="gold-accent font-semibold">Nous</span>
+                    </h2>
+                    <p class="text-lg text-gray-400 max-w-2xl mx-auto">
+                        Notre équipe est à votre disposition pour répondre à toutes vos questions
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                    <div class="fade-in">
+                        <div class="space-y-8">
+                            <div class="flex items-start space-x-4">
+                                <div class="w-12 h-12 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-6 h-6 text-black" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/>
+                                        <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 class="text-xl font-semibold mb-2">Email</h3>
+                                    <p class="text-gray-400">contact@goauto95.fr</p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-start space-x-4">
+                                <div class="w-12 h-12 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-6 h-6 text-black" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 class="text-xl font-semibold mb-2">Téléphone</h3>
+                                    <p class="text-gray-400">01 23 45 67 89</p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-start space-x-4">
+                                <div class="w-12 h-12 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-6 h-6 text-black" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 class="text-xl font-semibold mb-2">Adresse</h3>
+                                    <p class="text-gray-400">123 Avenue de la République<br>95000 Cergy, France</p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-start space-x-4">
+                                <div class="w-12 h-12 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-6 h-6 text-black" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 class="text-xl font-semibold mb-2">Horaires</h3>
+                                    <p class="text-gray-400">
+                                        Lun - Ven: 9h00 - 19h00<br>
+                                        Sam: 9h00 - 18h00<br>
+                                        Dim: Fermé
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="fade-in">
+                        <div class="vehicle-card p-8 rounded-2xl">
+                            <h3 class="text-2xl font-semibold mb-6">Envoyez-nous un message</h3>
+                            <form class="space-y-6">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2">Nom *</label>
+                                        <input type="text" required class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2">Email *</label>
+                                        <input type="email" required class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Sujet</label>
+                                    <input type="text" class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Message *</label>
+                                    <textarea required rows="5" class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors resize-none"></textarea>
+                                </div>
+                                <button type="submit" class="w-full btn-premium py-4 rounded-lg font-semibold text-lg">
+                                    Envoyer le message
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- PAGE VÉHICULES -->
+    <div id="vehicles-page" class="page">
+        <section class="hero-gradient pt-24 pb-12">
+            <div class="max-w-7xl mx-auto px-6 text-center">
+                <div class="fade-in">
+                    <h1 class="text-2xl md:text-4xl font-light mb-6">
+                        Nos <span class="gold-accent font-semibold">Véhicules</span>
+                    </h1>
+                    <p class="text-lg text-gray-300 mb-8 max-w-2xl mx-auto">
+                        Découvrez notre sélection exclusive de véhicules premium
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <section class="py-20 bg-gray-900">
+            <div class="max-w-7xl mx-auto px-6">
+                <!-- Filtres -->
+                <div class="flex flex-wrap justify-center gap-4 mb-12 fade-in">
+                    <button onclick="filterVehicles('all')" class="filter-btn filter-active px-6 py-3 rounded-full font-medium transition-all">
+                        Tous
+                    </button>
+                    <button onclick="filterVehicles('premium')" class="filter-btn px-6 py-3 rounded-full font-medium bg-gray-800 hover:bg-gray-700 transition-all">
+                        Premium
+                    </button>
+                    <button onclick="filterVehicles('sport')" class="filter-btn px-6 py-3 rounded-full font-medium bg-gray-800 hover:bg-gray-700 transition-all">
+                        Sport
+                    </button>
+                    <button onclick="filterVehicles('suv')" class="filter-btn px-6 py-3 rounded-full font-medium bg-gray-800 hover:bg-gray-700 transition-all">
+                        SUV
+                    </button>
+                    <button onclick="filterVehicles('berline')" class="filter-btn px-6 py-3 rounded-full font-medium bg-gray-800 hover:bg-gray-700 transition-all">
+                        Berline
+                    </button>
+                </div>
+
+                <!-- Grille des véhicules -->
+                <div id="vehicles-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <!-- Les véhicules seront ajoutés ici dynamiquement -->
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Modal de modification -->
+    <div id="edit-vehicle-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
         <div class="bg-gray-900 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div class="p-6 border-b border-gray-800 flex justify-between items-center">
-                <h3 id="modal-title" class="text-2xl font-semibold">Détails du véhicule</h3>
-                <button onclick="closeVehicleModal()" class="text-gray-400 hover:text-white">
+                <h3 class="text-2xl font-semibold">Modifier le véhicule</h3>
+                <button onclick="closeEditModal()" class="text-gray-400 hover:text-white">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
                 </button>
             </div>
-            <div id="modal-content" class="p-6">
-                <!-- Contenu dynamique -->
+            <div id="edit-modal-content" class="p-6">
+                <!-- Contenu du formulaire de modification -->
             </div>
         </div>
     </div>
 
     <script>
-        // Animation au scroll
-        const observerOptions = {
-            threshold: 0.1,
-            rootMargin: '0px 0px -50px 0px'
-        };
+        // Stockage local des véhicules
+        let vehicles = JSON.parse(localStorage.getItem('vehicles')) || [];
+        let vehicleImages = JSON.parse(localStorage.getItem('vehicleImages')) || {};
+        let currentEditingId = null;
 
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('visible');
-                }
+        // Gestion des onglets admin
+        function showAdminTab(tabId) {
+            // Masquer tous les onglets
+            document.querySelectorAll('.admin-tab').forEach(tab => {
+                tab.classList.remove('active');
+                tab.style.display = 'none';
             });
-        }, observerOptions);
+            
+            // Afficher l'onglet sélectionné
+            document.getElementById(tabId + '-tab').style.display = 'block';
+            document.getElementById(tabId + '-tab').classList.add('active');
+            
+            // Mettre à jour les boutons
+            document.querySelectorAll('.admin-tab-btn').forEach(btn => {
+                btn.classList.remove('filter-active');
+                btn.classList.add('bg-gray-800', 'hover:bg-gray-700');
+            });
+            
+            event.target.classList.add('filter-active');
+            event.target.classList.remove('bg-gray-800', 'hover:bg-gray-700');
 
-        document.querySelectorAll('.fade-in').forEach(el => {
-            observer.observe(el);
-        });
+            // Charger les données selon l'onglet
+            if (tabId === 'manage-vehicles') {
+                loadVehiclesManagement();
+            } else if (tabId === 'statistics') {
+                loadStatistics();
+            }
+        }
 
-        // Navigation fluide
-        function scrollToSection(sectionId) {
-            document.getElementById(sectionId).scrollIntoView({
-                behavior: 'smooth'
+        // Gestion du drag & drop d'images
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.currentTarget.classList.add('drag-over');
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('drag-over');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('drag-over');
+            const files = e.dataTransfer.files;
+            handleFiles(files);
+        }
+
+        function handleFileSelect(e) {
+            const files = e.target.files;
+            handleFiles(files);
+        }
+
+        function handleFiles(files) {
+            const container = document.getElementById('image-preview-container');
+            container.classList.remove('hidden');
+            
+            Array.from(files).forEach((file, index) => {
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const imageDiv = document.createElement('div');
+                        imageDiv.className = 'image-preview bg-gray-800 rounded-lg h-32 relative';
+                        imageDiv.innerHTML = `
+                            <img src="${e.target.result}" alt="Preview" class="rounded-lg">
+                            <button type="button" onclick="removeImage(this)" class="delete-image w-6 h-6 rounded-full text-white hover:bg-red-600 transition-colors flex items-center justify-center">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        `;
+                        container.appendChild(imageDiv);
+                    };
+                    reader.readAsDataURL(file);
+                }
             });
         }
 
-        // Filtrage des véhicules
-        function filterVehicles(category) {
-            const vehicles = document.querySelectorAll('[data-category]');
-            const buttons = document.querySelectorAll('.filter-btn');
+        function removeImage(button) {
+            button.parentElement.remove();
+            const container = document.getElementById('image-preview-container');
+            if (container.children.length === 0) {
+                container.classList.add('hidden');
+            }
+        }
+
+        // Ajouter équipement personnalisé
+        function addCustomFeature() {
+            const input = document.getElementById('custom-feature');
+            const value = input.value.trim();
             
-            // Mise à jour des boutons
-            buttons.forEach(btn => {
+            if (value) {
+                const list = document.getElementById('custom-features-list');
+                const featureDiv = document.createElement('div');
+                featureDiv.className = 'flex items-center justify-between bg-gray-800 px-3 py-2 rounded-lg';
+                featureDiv.innerHTML = `
+                    <span>${value}</span>
+                    <button type="button" onclick="removeCustomFeature(this)" class="text-red-400 hover:text-red-300">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                    <input type="hidden" name="custom-features" value="${value}">
+                `;
+                list.appendChild(featureDiv);
+                input.value = '';
+            }
+        }
+
+        function removeCustomFeature(button) {
+            button.parentElement.remove();
+        }
+
+        // Ajouter un véhicule
+        function addVehicle(event) {
+            event.preventDefault();
+            
+            const formData = new FormData(event.target);
+            const vehicle = {
+                id: Date.now().toString(),
+                brand: formData.get('brand'),
+                model: formData.get('model'),
+                year: formData.get('year'),
+                mileage: formData.get('mileage'),
+                price: formData.get('price'),
+                fuel: formData.get('fuel'),
+                transmission: formData.get('transmission'),
+                power: formData.get('power'),
+                category: formData.get('category'),
+                status: formData.get('status'),
+                description: formData.get('description'),
+                features: [],
+                customFeatures: [],
+                dateAdded: new Date().toISOString()
+            };
+
+            // Récupérer les équipements cochés
+            const checkedFeatures = document.querySelectorAll('input[name="features"]:checked');
+            checkedFeatures.forEach(checkbox => {
+                vehicle.features.push(checkbox.value);
+            });
+
+            // Récupérer les équipements personnalisés
+            const customFeatures = document.querySelectorAll('input[name="custom-features"]');
+            customFeatures.forEach(input => {
+                vehicle.customFeatures.push(input.value);
+            });
+
+            // Sauvegarder les images
+            const images = [];
+            const imageElements = document.querySelectorAll('#image-preview-container img');
+            imageElements.forEach(img => {
+                images.push(img.src);
+            });
+            
+            vehicleImages[vehicle.id] = images;
+
+            // Ajouter le véhicule
+            vehicles.push(vehicle);
+            
+            // Sauvegarder dans localStorage
+            localStorage.setItem('vehicles', JSON.stringify(vehicles));
+            localStorage.setItem('vehicleImages', JSON.stringify(vehicleImages));
+
+            alert('Véhicule ajouté avec succès !');
+            resetForm();
+            updateVehiclesDisplay();
+        }
+
+        // Réinitialiser le formulaire
+        function resetForm() {
+            document.getElementById('add-vehicle-form').reset();
+            document.getElementById('image-preview-container').innerHTML = '';
+            document.getElementById('image-preview-container').classList.add('hidden');
+            document.getElementById('custom-features-list').innerHTML = '';
+        }
+
+        // Charger la gestion des véhicules
+        function loadVehiclesManagement() {
+            const container = document.getElementById('vehicles-management-list');
+            container.innerHTML = '';
+
+            vehicles.forEach(vehicle => {
+                const vehicleDiv = document.createElement('div');
+                vehicleDiv.className = 'bg-gray-800 rounded-xl p-6 flex items-center justify-between';
+                
+                const statusColor = vehicle.status === 'Disponible' ? 'bg-green-500' : 
+                                  vehicle.status === 'Réservé' ? 'bg-orange-500' : 'bg-red-500';
+                
+                const images = vehicleImages[vehicle.id] || [];
+                const mainImage = images.length > 0 ? images[0] : '';
+
+                vehicleDiv.innerHTML = `
+                    <div class="flex items-center space-x-4">
+                        <div class="w-20 h-20 bg-gray-700 rounded-lg overflow-hidden">
+                            ${mainImage ? `<img src="${mainImage}" alt="${vehicle.brand} ${vehicle.model}" class="w-full h-full object-cover">` : 
+                              `<div class="w-full h-full flex items-center justify-center">
+                                <svg class="w-8 h-8 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4zM18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9z"/>
+                                </svg>
+                              </div>`}
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold">${vehicle.brand} ${vehicle.model}</h3>
+                            <p class="text-gray-400">${vehicle.year} • ${parseInt(vehicle.mileage).toLocaleString()} km</p>
+                            <p class="text-yellow-400 font-semibold">${parseInt(vehicle.price).toLocaleString()} €</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <span class="${statusColor} text-white px-3 py-1 rounded-full text-sm">${vehicle.status}</span>
+                        <button onclick="editVehicle('${vehicle.id}')" class="btn-premium px-4 py-2 rounded-lg font-medium">
+                            Modifier
+                        </button>
+                        <button onclick="deleteVehicle('${vehicle.id}')" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                            Supprimer
+                        </button>
+                    </div>
+                `;
+                
+                container.appendChild(vehicleDiv);
+            });
+        }
+
+        // Modifier un véhicule
+        function editVehicle(id) {
+            const vehicle = vehicles.find(v => v.id === id);
+            if (!vehicle) return;
+
+            currentEditingId = id;
+            const modal = document.getElementById('edit-vehicle-modal');
+            const content = document.getElementById('edit-modal-content');
+
+            // Créer le formulaire de modification (similaire au formulaire d'ajout)
+            content.innerHTML = `
+                <form id="edit-vehicle-form" onsubmit="updateVehicle(event)" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Marque *</label>
+                            <input type="text" name="brand" value="${vehicle.brand}" required class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Modèle *</label>
+                            <input type="text" name="model" value="${vehicle.model}" required class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors">
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Année *</label>
+                            <input type="number" name="year" value="${vehicle.year}" min="2000" max="2024" required class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Kilométrage *</label>
+                            <input type="number" name="mileage" value="${vehicle.mileage}" required class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Prix (€) *</label>
+                            <input type="number" name="price" value="${vehicle.price}" required class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Statut *</label>
+                            <select name="status" required class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors">
+                                <option value="Disponible" ${vehicle.status === 'Disponible' ? 'selected' : ''}>Disponible</option>
+                                <option value="Réservé" ${vehicle.status === 'Réservé' ? 'selected' : ''}>Réservé</option>
+                                <option value="Vendu" ${vehicle.status === 'Vendu' ? 'selected' : ''}>Vendu</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-4 pt-6">
+                        <button type="submit" class="flex-1 btn-premium py-3 rounded-lg font-semibold">
+                            Mettre à jour
+                        </button>
+                        <button type="button" onclick="closeEditModal()" class="px-8 py-3 border-2 border-gray-600 rounded-lg font-semibold hover:bg-gray-800 transition-colors">
+                            Annuler
+                        </button>
+                    </div>
+                </form>
+            `;
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            document.body.style.overflow = 'hidden';
+        }
+
+        // Mettre à jour un véhicule
+        function updateVehicle(event) {
+            event.preventDefault();
+            
+            const formData = new FormData(event.target);
+            const vehicleIndex = vehicles.findIndex(v => v.id === currentEditingId);
+            
+            if (vehicleIndex !== -1) {
+                vehicles[vehicleIndex] = {
+                    ...vehicles[vehicleIndex],
+                    brand: formData.get('brand'),
+                    model: formData.get('model'),
+                    year: formData.get('year'),
+                    mileage: formData.get('mileage'),
+                    price: formData.get('price'),
+                    status: formData.get('status')
+                };
+
+                localStorage.setItem('vehicles', JSON.stringify(vehicles));
+                alert('Véhicule mis à jour avec succès !');
+                closeEditModal();
+                loadVehiclesManagement();
+                updateVehiclesDisplay();
+            }
+        }
+
+        // Fermer le modal de modification
+        function closeEditModal() {
+            const modal = document.getElementById('edit-vehicle-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            document.body.style.overflow = 'auto';
+            currentEditingId = null;
+        }
+
+        // Supprimer un véhicule
+        function deleteVehicle(id) {
+            if (confirm('Êtes-vous sûr de vouloir supprimer ce véhicule ?')) {
+                vehicles = vehicles.filter(v => v.id !== id);
+                delete vehicleImages[id];
+                
+                localStorage.setItem('vehicles', JSON.stringify(vehicles));
+                localStorage.setItem('vehicleImages', JSON.stringify(vehicleImages));
+                
+                loadVehiclesManagement();
+                updateVehiclesDisplay();
+                alert('Véhicule supprimé avec succès !');
+            }
+        }
+
+        // Rechercher des véhicules
+        function searchVehicles() {
+            const searchTerm = document.getElementById('search-vehicles').value.toLowerCase();
+            const vehicleElements = document.querySelectorAll('#vehicles-management-list > div');
+            
+            vehicleElements.forEach(element => {
+                const text = element.textContent.toLowerCase();
+                element.style.display = text.includes(searchTerm) ? 'flex' : 'none';
+            });
+        }
+
+        // Filtrer par statut
+        function filterByStatus() {
+            const status = document.getElementById('filter-status').value;
+            const vehicleElements = document.querySelectorAll('#vehicles-management-list > div');
+            
+            vehicleElements.forEach(element => {
+                if (!status) {
+                    element.style.display = 'flex';
+                } else {
+                    const statusElement = element.querySelector('.bg-green-500, .bg-orange-500, .bg-red-500');
+                    const vehicleStatus = statusElement ? statusElement.textContent : '';
+                    element.style.display = vehicleStatus === status ? 'flex' : 'none';
+                }
+            });
+        }
+
+        // Charger les statistiques
+        function loadStatistics() {
+            const total = vehicles.length;
+            const available = vehicles.filter(v => v.status === 'Disponible').length;
+            const reserved = vehicles.filter(v => v.status === 'Réservé').length;
+            const sold = vehicles.filter(v => v.status === 'Vendu').length;
+
+            document.getElementById('total-vehicles').textContent = total;
+            document.getElementById('available-vehicles').textContent = available;
+            document.getElementById('reserved-vehicles').textContent = reserved;
+            document.getElementById('sold-vehicles').textContent = sold;
+
+            // Statistiques par catégorie
+            const categories = {};
+            vehicles.forEach(vehicle => {
+                categories[vehicle.category] = (categories[vehicle.category] || 0) + 1;
+            });
+
+            const categoryStats = document.getElementById('category-stats');
+            categoryStats.innerHTML = '';
+            
+            Object.entries(categories).forEach(([category, count]) => {
+                const div = document.createElement('div');
+                div.className = 'flex justify-between items-center';
+                div.innerHTML = `
+                    <span class="capitalize">${category}</span>
+                    <span class="font-semibold">${count}</span>
+                `;
+                categoryStats.appendChild(div);
+            });
+
+            // Valeur du stock
+            const stockValue = vehicles
+                .filter(v => v.status === 'Disponible')
+                .reduce((sum, v) => sum + parseInt(v.price), 0);
+            
+            document.getElementById('stock-value').textContent = stockValue.toLocaleString() + ' €';
+        }
+
+        // Mettre à jour l'affichage des véhicules sur la page publique
+        function updateVehiclesDisplay() {
+            const grid = document.getElementById('vehicles-grid');
+            if (!grid) return;
+
+            grid.innerHTML = '';
+
+            vehicles.forEach(vehicle => {
+                const images = vehicleImages[vehicle.id] || [];
+                const mainImage = images.length > 0 ? images[0] : '';
+                
+                const statusColor = vehicle.status === 'Disponible' ? 'bg-green-500' : 
+                                  vehicle.status === 'Réservé' ? 'bg-orange-500' : 'bg-red-500';
+
+                const vehicleCard = document.createElement('div');
+                vehicleCard.className = `vehicle-card card-hover rounded-2xl overflow-hidden fade-in visible`;
+                vehicleCard.setAttribute('data-category', vehicle.category);
+
+                vehicleCard.innerHTML = `
+                    <div class="relative h-64 bg-gradient-to-br from-gray-700 to-gray-800 overflow-hidden">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                        <div class="absolute top-4 right-4 ${statusColor} text-white px-3 py-1 rounded-full text-sm font-medium">
+                            ${vehicle.status}
+                        </div>
+                        ${mainImage ? 
+                            `<img src="${mainImage}" alt="${vehicle.brand} ${vehicle.model}" class="w-full h-full object-cover">` :
+                            `<div class="w-full h-full flex items-center justify-center">
+                                <svg class="w-24 h-24 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4zM18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z"/>
+                                </svg>
+                            </div>`
+                        }
+                    </div>
+                    <div class="p-6">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 class="text-xl font-semibold mb-1">${vehicle.brand} ${vehicle.model}</h3>
+                                <p class="text-gray-400">${vehicle.year} • ${parseInt(vehicle.mileage).toLocaleString()} km</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-2xl font-bold gold-accent">${parseInt(vehicle.price).toLocaleString()} €</p>
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap gap-2 mb-4">
+                            <span class="bg-gray-800 px-3 py-1 rounded-full text-sm">${vehicle.transmission}</span>
+                            <span class="bg-gray-800 px-3 py-1 rounded-full text-sm">${vehicle.fuel}</span>
+                            <span class="bg-gray-800 px-3 py-1 rounded-full text-sm">${vehicle.power} ch</span>
+                        </div>
+                        <button onclick="openVehicleModal('${vehicle.id}')" class="w-full ${vehicle.status === 'Vendu' ? 'bg-gray-700 cursor-not-allowed opacity-50' : 'btn-premium'} py-3 rounded-lg font-semibold">
+                            ${vehicle.status === 'Vendu' ? 'Véhicule vendu' : 'Voir les détails'}
+                        </button>
+                    </div>
+                `;
+
+                grid.appendChild(vehicleCard);
+            });
+        }
+
+        // Gestion des pages (fonction existante modifiée)
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            
+            if (pageId === 'admin') {
+                document.getElementById('admin-page').classList.add('active');
+                // Afficher l'onglet par défaut
+                showAdminTab('add-vehicle');
+                setTimeout(() => {
+                    document.querySelectorAll('#admin-page .fade-in').forEach(el => {
+                        el.classList.add('visible');
+                    });
+                }, 100);
+            } else if (pageId === 'vehicles') {
+                document.getElementById('vehicles-page').classList.add('active');
+                updateVehiclesDisplay();
+                setTimeout(() => {
+                    document.querySelectorAll('#vehicles-page .fade-in').forEach(el => {
+                        el.classList.add('visible');
+                    });
+                }, 100);
+            } else if (pageId === 'home') {
+                document.getElementById('home-page').classList.add('active');
+            }
+            
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', function() {
+            // Charger les véhicules existants
+            updateVehiclesDisplay();
+            
+            // Afficher la page d'accueil par défaut
+            showPage('home');
+            
+            // Animation au scroll
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, observerOptions);
+
+            document.querySelectorAll('.fade-in').forEach(el => {
+                observer.observe(el);
+            });
+        });
+
+        // Fonction pour faire défiler vers une section
+        function scrollToSection(sectionId) {
+            const section = document.getElementById(sectionId);
+            if (section) {
+                section.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        // Filtrer les véhicules par catégorie
+        function filterVehicles(category) {
+            const vehicleCards = document.querySelectorAll('#vehicles-grid > div');
+            const filterBtns = document.querySelectorAll('.filter-btn');
+            
+            // Mettre à jour les boutons de filtre
+            filterBtns.forEach(btn => {
                 btn.classList.remove('filter-active');
                 btn.classList.add('bg-gray-800', 'hover:bg-gray-700');
             });
@@ -576,183 +1193,26 @@
             event.target.classList.add('filter-active');
             event.target.classList.remove('bg-gray-800', 'hover:bg-gray-700');
             
-            // Filtrage
-            vehicles.forEach(vehicle => {
-                if (category === 'all' || vehicle.dataset.category === category) {
-                    vehicle.style.display = 'block';
-                    setTimeout(() => {
-                        vehicle.style.opacity = '1';
-                        vehicle.style.transform = 'translateY(0)';
-                    }, 100);
+            // Filtrer les véhicules
+            vehicleCards.forEach(card => {
+                if (category === 'all' || card.getAttribute('data-category') === category) {
+                    card.style.display = 'block';
                 } else {
-                    vehicle.style.opacity = '0';
-                    vehicle.style.transform = 'translateY(20px)';
-                    setTimeout(() => {
-                        vehicle.style.display = 'none';
-                    }, 300);
+                    card.style.display = 'none';
                 }
             });
         }
 
-        // Modal véhicule
+        // Ouvrir le modal de détails d'un véhicule
         function openVehicleModal(vehicleId) {
-            const modal = document.getElementById('vehicle-modal');
-            const title = document.getElementById('modal-title');
-            const content = document.getElementById('modal-content');
-            
-            // Données exemple selon l'ID
-            const vehicleData = {
-                'mercedes-s': {
-                    title: 'Mercedes-Benz Classe S 400d 4MATIC',
-                    price: '89 900 €',
-                    year: '2022',
-                    km: '15 000 km',
-                    fuel: 'Diesel',
-                    transmission: 'Automatique 9G-TRONIC',
-                    power: '330 ch',
-                    features: ['Pack AMG Line', 'Toit ouvrant panoramique', 'Sièges massants', 'Système audio Burmester', 'Conduite semi-autonome', 'Éclairage LED Matrix']
-                },
-                'bmw-m4': {
-                    title: 'BMW M4 Competition Coupé',
-                    price: '95 500 €',
-                    year: '2023',
-                    km: '8 500 km',
-                    fuel: 'Essence',
-                    transmission: 'Manuelle 6 vitesses',
-                    power: '510 ch',
-                    features: ['Pack Carbon', 'Différentiel M', 'Freins céramique', 'Échappement Akrapovic', 'Sièges baquets M', 'Suspension adaptative']
-                },
-                'audi-q8': {
-                    title: 'Audi Q8 50 TDI S-Line Quattro',
-                    price: '78 900 €',
-                    year: '2022',
-                    km: '22 000 km',
-                    fuel: 'Diesel',
-                    transmission: 'Automatique Tiptronic',
-                    power: '286 ch',
-                    features: ['Pack S-Line', 'Toit ouvrant', 'Cockpit virtuel', 'Système audio Bang & Olufsen', 'Caméra 360°', 'Attelage électrique']
-                }
-            };
-            
-            const vehicle = vehicleData[vehicleId];
+            const vehicle = vehicles.find(v => v.id === vehicleId);
             if (!vehicle) return;
+
+            const images = vehicleImages[vehicleId] || [];
             
-            title.textContent = vehicle.title;
-            content.innerHTML = `
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <div>
-                        <div class="bg-gradient-to-br from-gray-700 to-gray-800 rounded-xl h-64 mb-6 flex items-center justify-center">
-                            <svg class="w-24 h-24 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4zM18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z"/>
-                            </svg>
-                        </div>
-                        <div class="grid grid-cols-3 gap-2">
-                            <div class="bg-gray-800 rounded-lg h-16 flex items-center justify-center">
-                                <span class="text-xs text-gray-400">Photo 2</span>
-                            </div>
-                            <div class="bg-gray-800 rounded-lg h-16 flex items-center justify-center">
-                                <span class="text-xs text-gray-400">Photo 3</span>
-                            </div>
-                            <div class="bg-gray-800 rounded-lg h-16 flex items-center justify-center">
-                                <span class="text-xs text-gray-400">Photo 4</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div>
-                        <div class="mb-6">
-                            <div class="flex justify-between items-center mb-4">
-                                <span class="text-3xl font-bold gold-accent">${vehicle.price}</span>
-                                <span class="bg-green-500 text-white px-3 py-1 rounded-full text-sm">Disponible</span>
-                            </div>
-                            
-                            <div class="grid grid-cols-2 gap-4 mb-6">
-                                <div class="bg-gray-800 p-4 rounded-lg">
-                                    <div class="text-sm text-gray-400">Année</div>
-                                    <div class="font-semibold">${vehicle.year}</div>
-                                </div>
-                                <div class="bg-gray-800 p-4 rounded-lg">
-                                    <div class="text-sm text-gray-400">Kilométrage</div>
-                                    <div class="font-semibold">${vehicle.km}</div>
-                                </div>
-                                <div class="bg-gray-800 p-4 rounded-lg">
-                                    <div class="text-sm text-gray-400">Carburant</div>
-                                    <div class="font-semibold">${vehicle.fuel}</div>
-                                </div>
-                                <div class="bg-gray-800 p-4 rounded-lg">
-                                    <div class="text-sm text-gray-400">Puissance</div>
-                                    <div class="font-semibold">${vehicle.power}</div>
-                                </div>
-                            </div>
-                            
-                            <div class="mb-6">
-                                <h4 class="font-semibold mb-3">Transmission</h4>
-                                <p class="text-gray-300">${vehicle.transmission}</p>
-                            </div>
-                            
-                            <div class="mb-6">
-                                <h4 class="font-semibold mb-3">Équipements principaux</h4>
-                                <div class="grid grid-cols-1 gap-2">
-                                    ${vehicle.features.map(feature => `
-                                        <div class="flex items-center space-x-2">
-                                            <div class="w-2 h-2 bg-yellow-400 rounded-full"></div>
-                                            <span class="text-gray-300">${feature}</span>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                            </div>
-                            
-                            <button onclick="requestQuote('${vehicleId}')" class="w-full btn-premium py-3 rounded-lg font-semibold mb-3">
-                                Demander un devis
-                            </button>
-                            <button onclick="scheduleVisit('${vehicleId}')" class="w-full border-2 border-gray-600 py-3 rounded-lg font-semibold hover:bg-gray-800 transition-colors">
-                                Programmer une visite
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            document.body.style.overflow = 'hidden';
+            // Créer le modal (implémentation simplifiée)
+            alert(`Détails du véhicule:\n${vehicle.brand} ${vehicle.model}\nAnnée: ${vehicle.year}\nPrix: ${parseInt(vehicle.price).toLocaleString()} €\nStatut: ${vehicle.status}`);
         }
-
-        function closeVehicleModal() {
-            const modal = document.getElementById('vehicle-modal');
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-            document.body.style.overflow = 'auto';
-        }
-
-        function requestQuote(vehicleId) {
-            alert('Fonctionnalité de demande de devis - Redirection vers le formulaire de contact avec référence véhicule : ' + vehicleId);
-            closeVehicleModal();
-            scrollToSection('contact');
-        }
-
-        function scheduleVisit(vehicleId) {
-            alert('Fonctionnalité de prise de rendez-vous - Intégration avec système de réservation pour le véhicule : ' + vehicleId);
-        }
-
-        function submitContactForm(event) {
-            event.preventDefault();
-            alert('Formulaire envoyé avec succès ! Nous vous recontacterons dans les plus brefs délais.');
-        }
-
-        // Fermer modal avec Escape
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                closeVehicleModal();
-            }
-        });
-
-        // Fermer modal en cliquant à l'extérieur
-        document.getElementById('vehicle-modal').addEventListener('click', (e) => {
-            if (e.target.id === 'vehicle-modal') {
-                closeVehicleModal();
-            }
-        });
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'980db60dd76b0197',t:'MTc1ODE2NTY2NS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'980dd25105ac6eed',t:'MTc1ODE2NjgyMi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
