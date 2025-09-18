@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GoAuto95 - Administration v4</title>
+    <title>GoAuto95 - Administration v50</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Supabase Client -->
@@ -62,6 +62,7 @@
         .notification.show { transform: translateX(0); }
         .notification.success { background: linear-gradient(135deg, #10b981, #059669); }
         .notification.error { background: linear-gradient(135deg, #ef4444, #dc2626); }
+        .notification.info { background: linear-gradient(135deg, #3b82f6, #2563eb); }
         .db-status { 
             padding: 8px 16px; 
             border-radius: 8px; 
@@ -70,15 +71,58 @@
         }
         .db-status.connected { background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
         .db-status.disconnected { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
-        .db-status.testing { background: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }
+        .db-status.demo { background: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }
         .admin-section { display: none; }
         .admin-section.active { display: block !important; }
         .admin-nav-btn.active { background: linear-gradient(135deg, #d4af37 0%, #f4e4a6 100%); color: #0f0f23; }
+        .version-badge { 
+            position: fixed; 
+            bottom: 20px; 
+            left: 20px; 
+            background: rgba(212, 175, 55, 0.1); 
+            border: 1px solid rgba(212, 175, 55, 0.3); 
+            color: #d4af37; 
+            padding: 8px 12px; 
+            border-radius: 8px; 
+            font-size: 12px; 
+            font-weight: 500;
+            z-index: 1000;
+        }
+        .image-gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 8px; }
+        .image-gallery img { width: 100%; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); }
+        .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 4px; }
+        .feature-tag { background: rgba(212, 175, 55, 0.1); color: #d4af37; padding: 4px 8px; border-radius: 6px; font-size: 11px; text-align: center; }
+        .stats-card { background: linear-gradient(145deg, #1a1a2e 0%, #16213e 100%); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 2000; display: none; align-items: center; justify-content: center; }
+        .modal.show { display: flex; }
+        .modal-content { background: linear-gradient(145deg, #1a1a2e 0%, #16213e 100%); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; max-width: 90vw; max-height: 90vh; overflow-y: auto; }
+        .filter-btn { transition: all 0.3s ease; }
+        .filter-btn.active { background: linear-gradient(135deg, #d4af37 0%, #f4e4a6 100%); color: #0f0f23; }
+        .search-input { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); }
+        .search-input:focus { border-color: #d4af37; background: rgba(255,255,255,0.1); }
     </style>
 </head>
 <body class="bg-gray-900 text-white overflow-x-hidden">
+    <!-- Badge Version -->
+    <div class="version-badge">
+        GoAuto95 v50 🚀 (Mode Réel)
+    </div>
+
     <!-- Notifications -->
     <div id="notification-container"></div>
+
+    <!-- Modal Détails Véhicule -->
+    <div id="vehicle-modal" class="modal">
+        <div class="modal-content p-8 m-4">
+            <div class="flex justify-between items-center mb-6">
+                <h2 id="modal-title" class="text-2xl font-bold gold-accent">Détails du véhicule</h2>
+                <button onclick="closeVehicleModal()" class="text-gray-400 hover:text-white text-2xl">×</button>
+            </div>
+            <div id="modal-content">
+                <!-- Contenu dynamique -->
+            </div>
+        </div>
+    </div>
 
     <!-- Navigation -->
     <nav class="fixed top-0 w-full z-50 bg-black/90 backdrop-blur-md border-b border-white/10">
@@ -89,7 +133,6 @@
                         <span class="text-black font-bold text-lg">GA</span>
                     </div>
                     <span class="text-xl font-bold gold-accent">GoAuto95</span>
-                    <span class="text-xs bg-yellow-400/20 text-yellow-400 px-2 py-1 rounded-full ml-2">v4</span>
                 </div>
                 <div class="hidden md:flex items-center justify-center flex-1">
                     <div class="flex items-center space-x-8">
@@ -101,10 +144,10 @@
                     </div>
                 </div>
                 <div class="hidden md:flex items-center space-x-4">
-                    <div id="connection-status" class="db-status disconnected">
+                    <div id="connection-status" class="db-status demo">
                         <div class="flex items-center space-x-2">
-                            <div class="w-2 h-2 bg-current rounded-full"></div>
-                            <span>Connexion...</span>
+                            <div class="w-2 h-2 bg-current rounded-full animate-pulse"></div>
+                            <span>🔄 Connexion...</span>
                         </div>
                     </div>
                     <a href="#" onclick="showPage('login')" class="nav-link gold-accent bg-yellow-400/10 px-4 py-2 rounded-lg">Administration</a>
@@ -124,26 +167,26 @@
                                 <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
                             </svg>
                         </div>
-                        <h1 class="text-xl font-semibold gold-accent mb-1">Administration v4</h1>
-                        <p class="text-sm text-gray-400">Authentification Supabase</p>
+                        <h1 class="text-xl font-semibold gold-accent mb-1">Administration v50</h1>
+                        <p class="text-sm text-gray-400">Connexion Supabase</p>
                     </div>
 
-                    <div id="db-connection-status" class="db-status testing text-center mb-6">
+                    <div id="db-connection-status" class="db-status demo text-center mb-6">
                         <div class="flex items-center justify-center space-x-2">
-                            <div class="loading w-4 h-4"></div>
-                            <span>Test de connexion Supabase...</span>
+                            <div class="w-2 h-2 bg-current rounded-full animate-pulse"></div>
+                            <span>🔄 Test de connexion...</span>
                         </div>
                     </div>
 
                     <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
                         <div>
-                            <label class="block text-sm font-medium mb-1 text-white">Email / Identifiant</label>
-                            <input type="text" id="username" required class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors text-white placeholder-gray-400 text-sm" placeholder="admin">
+                            <label class="block text-sm font-medium mb-1 text-white">Email</label>
+                            <input type="email" id="username" required class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors text-white placeholder-gray-400 text-sm" placeholder="votre@email.com">
                         </div>
                         
                         <div>
                             <label class="block text-sm font-medium mb-1 text-white">Mot de passe</label>
-                            <input type="password" id="password" required class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors text-white placeholder-gray-400 text-sm" placeholder="auto95admin">
+                            <input type="password" id="password" required class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors text-white placeholder-gray-400 text-sm" placeholder="Votre mot de passe">
                         </div>
 
                         <div id="login-error" class="hidden bg-red-900/50 border border-red-500 text-red-200 px-3 py-2 rounded-lg">
@@ -163,7 +206,10 @@
 
                     <div class="mt-6 pt-6 border-t border-gray-700 text-center">
                         <p class="text-xs text-gray-500">
-                            🔒 Connexion sécurisée à Supabase
+                            🚀 Mode réel - Base Supabase connectée
+                        </p>
+                        <p class="text-xs text-yellow-400 mt-1">
+                            Fallback démo : admin / auto95admin
                         </p>
                     </div>
                 </div>
@@ -177,17 +223,17 @@
             <div class="max-w-7xl mx-auto px-6">
                 <div class="text-center mb-8">
                     <h1 class="text-3xl md:text-4xl font-light mb-4">
-                        Panneau <span class="gold-accent font-semibold">d'Administration v4</span>
+                        Panneau <span class="gold-accent font-semibold">d'Administration v50</span>
                     </h1>
                     <p class="text-lg text-gray-300 mb-6 max-w-2xl mx-auto">
-                        Gestion complète avec authentification Supabase
+                        🚀 Mode réel avec base de données Supabase
                     </p>
                     <div class="flex justify-center space-x-4">
                         <button onclick="showAdminSection('dashboard')" class="btn-premium px-6 py-2 rounded-lg font-semibold">
-                            Tableau de bord
+                            📊 Tableau de bord
                         </button>
                         <button onclick="logout()" class="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-6 py-2 rounded-lg font-semibold transition-all duration-300">
-                            Déconnexion
+                            🚪 Déconnexion
                         </button>
                     </div>
                 </div>
@@ -207,40 +253,71 @@
                     <button onclick="showAdminSection('add-vehicle')" id="nav-add-vehicle" class="admin-nav-btn bg-gray-800 text-gray-300 hover:bg-gray-700 px-4 py-2 rounded-lg font-medium transition-all">
                         ➕ Ajouter véhicule
                     </button>
-                    <button onclick="showAdminSection('settings')" id="nav-settings" class="admin-nav-btn bg-gray-800 text-gray-300 hover:bg-gray-700 px-4 py-2 rounded-lg font-medium transition-all">
-                        ⚙️ Paramètres
+                    <button onclick="showAdminSection('analytics')" id="nav-analytics" class="admin-nav-btn bg-gray-800 text-gray-300 hover:bg-gray-700 px-4 py-2 rounded-lg font-medium transition-all">
+                        📈 Analytiques
                     </button>
                 </div>
 
                 <!-- SECTION TABLEAU DE BORD -->
                 <div id="admin-dashboard" class="admin-section active">
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                        <div class="vehicle-card p-6 rounded-xl text-center">
+                        <div class="stats-card p-6 rounded-xl text-center">
                             <div class="text-3xl font-bold gold-accent mb-2" id="total-vehicles">0</div>
                             <div class="text-gray-400">Véhicules total</div>
+                            <div class="text-xs text-gray-500 mt-1">📊 Inventaire</div>
                         </div>
-                        <div class="vehicle-card p-6 rounded-xl text-center">
+                        <div class="stats-card p-6 rounded-xl text-center">
                             <div class="text-3xl font-bold text-green-400 mb-2" id="available-vehicles">0</div>
                             <div class="text-gray-400">Disponibles</div>
+                            <div class="text-xs text-gray-500 mt-1">✅ Prêts à vendre</div>
                         </div>
-                        <div class="vehicle-card p-6 rounded-xl text-center">
+                        <div class="stats-card p-6 rounded-xl text-center">
                             <div class="text-3xl font-bold text-orange-400 mb-2" id="reserved-vehicles">0</div>
                             <div class="text-gray-400">Réservés</div>
+                            <div class="text-xs text-gray-500 mt-1">⏳ En attente</div>
                         </div>
-                        <div class="vehicle-card p-6 rounded-xl text-center">
+                        <div class="stats-card p-6 rounded-xl text-center">
                             <div class="text-3xl font-bold text-red-400 mb-2" id="sold-vehicles">0</div>
                             <div class="text-gray-400">Vendus</div>
+                            <div class="text-xs text-gray-500 mt-1">💰 Transactions</div>
                         </div>
                     </div>
 
-                    <div class="vehicle-card p-6 rounded-xl">
-                        <h3 class="text-xl font-semibold mb-4">Derniers véhicules ajoutés</h3>
-                        <div id="recent-vehicles" class="space-y-4">
-                            <div class="text-center py-8 text-gray-400">
-                                <p>Aucun véhicule pour le moment</p>
-                                <button onclick="showAdminSection('add-vehicle')" class="btn-premium px-4 py-2 rounded-lg font-semibold mt-4">
-                                    ➕ Ajouter le premier véhicule
-                                </button>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div class="vehicle-card p-6 rounded-xl">
+                            <h3 class="text-xl font-semibold mb-4 flex items-center">
+                                🚗 Derniers véhicules ajoutés
+                                <span class="ml-2 text-sm bg-yellow-400/20 text-yellow-400 px-2 py-1 rounded-full" id="recent-count">0</span>
+                            </h3>
+                            <div id="recent-vehicles" class="space-y-4">
+                                <div class="text-center py-8 text-gray-400">
+                                    <div class="loading mx-auto mb-4"></div>
+                                    <p>Chargement...</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="vehicle-card p-6 rounded-xl">
+                            <h3 class="text-xl font-semibold mb-4 flex items-center">
+                                📈 Statistiques rapides
+                            </h3>
+                            <div class="space-y-4">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-400">Prix moyen</span>
+                                    <span class="font-semibold gold-accent" id="avg-price">0 €</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-400">Kilométrage moyen</span>
+                                    <span class="font-semibold" id="avg-mileage">0 km</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-400">Marque populaire</span>
+                                    <span class="font-semibold" id="popular-brand">-</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-400">Carburant dominant</span>
+                                    <span class="font-semibold" id="popular-fuel">-</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -249,18 +326,25 @@
                 <!-- SECTION GESTION VÉHICULES -->
                 <div id="admin-vehicles" class="admin-section">
                     <div class="vehicle-card p-6 rounded-xl mb-6">
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-xl font-semibold">Gestion des véhicules</h3>
-                            <button onclick="showAdminSection('add-vehicle')" class="btn-premium px-4 py-2 rounded-lg font-semibold">
-                                ➕ Ajouter un véhicule
-                            </button>
+                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                            <h3 class="text-xl font-semibold flex items-center">
+                                🚗 Gestion des véhicules
+                                <span class="ml-2 text-sm bg-blue-500/20 text-blue-400 px-2 py-1 rounded-full" id="vehicles-count">0</span>
+                            </h3>
+                            <div class="flex flex-wrap gap-3">
+                                <input type="text" id="search-vehicles" placeholder="🔍 Rechercher..." class="search-input px-4 py-2 rounded-lg text-white placeholder-gray-400 focus:outline-none">
+                                <select id="filter-status" class="search-input px-4 py-2 rounded-lg text-white focus:outline-none">
+                                    <option value="">Tous les statuts</option>
+                                    <option value="Disponible">Disponible</option>
+                                    <option value="Réservé">Réservé</option>
+                                    <option value="Vendu">Vendu</option>
+                                </select>
+                            </div>
                         </div>
                         <div id="admin-vehicles-list" class="space-y-4">
                             <div class="text-center py-8 text-gray-400">
-                                <p>Aucun véhicule pour le moment</p>
-                                <button onclick="showAdminSection('add-vehicle')" class="btn-premium px-4 py-2 rounded-lg font-semibold mt-4">
-                                    ➕ Ajouter le premier véhicule
-                                </button>
+                                <div class="loading mx-auto mb-4"></div>
+                                <p>Chargement des véhicules...</p>
                             </div>
                         </div>
                     </div>
@@ -269,37 +353,41 @@
                 <!-- SECTION AJOUTER VÉHICULE -->
                 <div id="admin-add-vehicle" class="admin-section">
                     <div class="vehicle-card p-6 rounded-xl">
-                        <h3 class="text-xl font-semibold mb-6">Ajouter un nouveau véhicule</h3>
+                        <h3 class="text-xl font-semibold mb-6 flex items-center">
+                            ➕ Ajouter un nouveau véhicule
+                            <span class="ml-2 text-sm bg-green-500/20 text-green-400 px-2 py-1 rounded-full">Mode réel</span>
+                        </h3>
+                        
                         <form id="add-vehicle-form" onsubmit="handleAddVehicle(event)" class="space-y-6">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
-                                    <label class="block text-sm font-medium mb-2">Marque *</label>
-                                    <input type="text" id="vehicle-brand" required class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors">
+                                    <label class="block text-sm font-medium mb-2">🏷️ Marque *</label>
+                                    <input type="text" id="vehicle-brand" required class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors" placeholder="ex: BMW, Mercedes, Audi...">
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium mb-2">Modèle *</label>
-                                    <input type="text" id="vehicle-model" required class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors">
+                                    <label class="block text-sm font-medium mb-2">🚗 Modèle *</label>
+                                    <input type="text" id="vehicle-model" required class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors" placeholder="ex: Série 3, Classe C, A4...">
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium mb-2">Année *</label>
-                                    <input type="number" id="vehicle-year" required min="1990" max="2024" class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors">
+                                    <label class="block text-sm font-medium mb-2">📅 Année *</label>
+                                    <input type="number" id="vehicle-year" required min="1990" max="2024" class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors" placeholder="2020">
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium mb-2">Prix (€) *</label>
-                                    <input type="number" id="vehicle-price" required min="0" class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors">
+                                    <label class="block text-sm font-medium mb-2">💰 Prix (€) *</label>
+                                    <input type="number" id="vehicle-price" required min="0" class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors" placeholder="25000">
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium mb-2">Kilométrage *</label>
-                                    <input type="number" id="vehicle-mileage" required min="0" class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors">
+                                    <label class="block text-sm font-medium mb-2">🛣️ Kilométrage *</label>
+                                    <input type="number" id="vehicle-mileage" required min="0" class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors" placeholder="50000">
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium mb-2">Puissance (ch) *</label>
-                                    <input type="number" id="vehicle-power" required min="0" class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors">
+                                    <label class="block text-sm font-medium mb-2">⚡ Puissance (ch) *</label>
+                                    <input type="number" id="vehicle-power" required min="50" max="1000" class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors" placeholder="150">
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium mb-2">Carburant *</label>
+                                    <label class="block text-sm font-medium mb-2">⛽ Carburant *</label>
                                     <select id="vehicle-fuel" required class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors">
-                                        <option value="">Sélectionner...</option>
+                                        <option value="">Choisir...</option>
                                         <option value="Essence">Essence</option>
                                         <option value="Diesel">Diesel</option>
                                         <option value="Hybride">Hybride</option>
@@ -307,38 +395,26 @@
                                     </select>
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium mb-2">Transmission *</label>
+                                    <label class="block text-sm font-medium mb-2">⚙️ Transmission *</label>
                                     <select id="vehicle-transmission" required class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors">
-                                        <option value="">Sélectionner...</option>
+                                        <option value="">Choisir...</option>
                                         <option value="Manuelle">Manuelle</option>
                                         <option value="Automatique">Automatique</option>
                                     </select>
                                 </div>
-                                <div>
-                                    <label class="block text-sm font-medium mb-2">Statut *</label>
-                                    <select id="vehicle-status" required class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors">
-                                        <option value="Disponible">Disponible</option>
-                                        <option value="Réservé">Réservé</option>
-                                        <option value="Vendu">Vendu</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium mb-2">URL Image</label>
-                                    <input type="url" id="vehicle-image" placeholder="https://..." class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors">
-                                </div>
                             </div>
-                            
+
                             <div>
-                                <label class="block text-sm font-medium mb-2">Description</label>
-                                <textarea id="vehicle-description" rows="4" class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors resize-none" placeholder="Description détaillée du véhicule..."></textarea>
+                                <label class="block text-sm font-medium mb-2">📝 Description</label>
+                                <textarea id="vehicle-description" rows="3" class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors resize-none" placeholder="Description du véhicule..."></textarea>
                             </div>
 
                             <div class="flex justify-end space-x-4">
                                 <button type="button" onclick="resetAddVehicleForm()" class="bg-gray-700 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold transition-all">
-                                    Réinitialiser
+                                    🔄 Réinitialiser
                                 </button>
                                 <button type="submit" id="add-vehicle-btn" class="btn-premium px-6 py-3 rounded-lg font-semibold flex items-center">
-                                    <span id="add-vehicle-btn-text">Ajouter le véhicule</span>
+                                    <span id="add-vehicle-btn-text">➕ Ajouter le véhicule</span>
                                     <div id="add-vehicle-loading" class="loading ml-2 hidden"></div>
                                 </button>
                             </div>
@@ -346,41 +422,50 @@
                     </div>
                 </div>
 
-                <!-- SECTION PARAMÈTRES -->
-                <div id="admin-settings" class="admin-section hidden">
+                <!-- SECTION ANALYTIQUES -->
+                <div id="admin-analytics" class="admin-section">
                     <div class="vehicle-card p-6 rounded-xl">
-                        <h3 class="text-xl font-semibold mb-6">Paramètres d'administration</h3>
-                        <form id="settings-form" onsubmit="handleUpdateCredentials(event)" class="space-y-6">
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    <label class="block text-sm font-medium mb-2">Nouvel identifiant</label>
-                                    <input type="text" id="new-username" class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium mb-2">Nouveau mot de passe</label>
-                                    <input type="password" id="new-password" class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors">
-                                </div>
+                        <h3 class="text-xl font-semibold mb-6 flex items-center">
+                            📈 Analytiques avancées
+                            <span class="ml-2 text-sm bg-purple-500/20 text-purple-400 px-2 py-1 rounded-full">v50</span>
+                        </h3>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                            <div class="stats-card p-4 rounded-lg">
+                                <h4 class="font-semibold mb-2 text-purple-400">💰 Valeur totale stock</h4>
+                                <div class="text-2xl font-bold gold-accent" id="total-value">0 €</div>
+                                <div class="text-xs text-gray-400 mt-1">Valeur de l'inventaire</div>
                             </div>
-                            
-                            <div class="bg-yellow-400/10 border border-yellow-400/30 rounded-lg p-4">
-                                <div class="flex items-start space-x-3">
-                                    <svg class="w-5 h-5 text-yellow-400 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
-                                    </svg>
-                                    <div>
-                                        <h4 class="text-yellow-400 font-medium mb-1">Attention</h4>
-                                        <p class="text-sm text-gray-300">La modification des identifiants vous déconnectera automatiquement. Vous devrez vous reconnecter avec les nouveaux identifiants.</p>
+                            <div class="stats-card p-4 rounded-lg">
+                                <h4 class="font-semibold mb-2 text-blue-400">📊 Prix médian</h4>
+                                <div class="text-2xl font-bold text-blue-400" id="median-price">0 €</div>
+                                <div class="text-xs text-gray-400 mt-1">Prix médian du stock</div>
+                            </div>
+                            <div class="stats-card p-4 rounded-lg">
+                                <h4 class="font-semibold mb-2 text-green-400">🏆 Véhicule le plus cher</h4>
+                                <div class="text-lg font-bold text-green-400" id="most-expensive">-</div>
+                                <div class="text-xs text-gray-400 mt-1">Véhicule premium</div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            <div class="stats-card p-4 rounded-lg">
+                                <h4 class="font-semibold mb-4">🏷️ Répartition par marque</h4>
+                                <div id="brand-stats" class="space-y-2">
+                                    <div class="text-center py-4 text-gray-400">
+                                        <p>Aucune donnée disponible</p>
                                     </div>
                                 </div>
                             </div>
-
-                            <div class="flex justify-end">
-                                <button type="submit" id="settings-btn" class="btn-premium px-6 py-3 rounded-lg font-semibold flex items-center">
-                                    <span id="settings-btn-text">Mettre à jour</span>
-                                    <div id="settings-loading" class="loading ml-2 hidden"></div>
-                                </button>
+                            <div class="stats-card p-4 rounded-lg">
+                                <h4 class="font-semibold mb-4">⛽ Répartition par carburant</h4>
+                                <div id="fuel-stats" class="space-y-2">
+                                    <div class="text-center py-4 text-gray-400">
+                                        <p>Aucune donnée disponible</p>
+                                    </div>
+                                </div>
                             </div>
-                        </form>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -401,10 +486,10 @@
                 </p>
                 <div class="flex flex-col sm:flex-row gap-6 justify-center">
                     <button onclick="showPage('vehicles')" class="btn-premium px-6 py-3 rounded-full text-base font-semibold">
-                        Découvrir nos véhicules
+                        🚗 Découvrir nos véhicules
                     </button>
                     <button onclick="scrollToSection('contact')" class="border-2 border-white/30 hover:border-yellow-400 px-6 py-3 rounded-full text-base font-semibold transition-all hover:bg-white/10">
-                        Nous contacter
+                        📞 Nous contacter
                     </button>
                 </div>
             </div>
@@ -421,9 +506,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                     <div class="vehicle-card card-hover p-8 rounded-2xl text-center">
                         <div class="w-16 h-16 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                            <svg class="w-8 h-8 text-black" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
+                            <span class="text-2xl">✅</span>
                         </div>
                         <h3 class="text-lg font-semibold mb-4">Garantie Premium</h3>
                         <p class="text-gray-400">Tous nos véhicules sont garantis et certifiés par nos experts.</p>
@@ -431,9 +514,7 @@
 
                     <div class="vehicle-card card-hover p-8 rounded-2xl text-center">
                         <div class="w-16 h-16 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                            <svg class="w-8 h-8 text-black" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/>
-                            </svg>
+                            <span class="text-2xl">💰</span>
                         </div>
                         <h3 class="text-lg font-semibold mb-4">Financement</h3>
                         <p class="text-gray-400">Solutions de financement flexibles adaptées à vos besoins.</p>
@@ -441,10 +522,7 @@
 
                     <div class="vehicle-card card-hover p-8 rounded-2xl text-center">
                         <div class="w-16 h-16 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                            <svg class="w-8 h-8 text-black" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/>
-                                <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/>
-                            </svg>
+                            <span class="text-2xl">🛠️</span>
                         </div>
                         <h3 class="text-lg font-semibold mb-4">Support 24/7</h3>
                         <p class="text-gray-400">Notre équipe est disponible pour vous accompagner à tout moment.</p>
@@ -504,10 +582,7 @@
                     <div class="space-y-8">
                         <div class="flex items-start space-x-4">
                             <div class="w-12 h-12 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                                <svg class="w-6 h-6 text-black" fill="currentColor" viewBox="0 0 20 20">
-                                    <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/>
-                                    <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/>
-                                </svg>
+                                <span class="text-black text-xl">📧</span>
                             </div>
                             <div>
                                 <h3 class="text-xl font-semibold mb-2">Email</h3>
@@ -517,9 +592,7 @@
 
                         <div class="flex items-start space-x-4">
                             <div class="w-12 h-12 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                                <svg class="w-6 h-6 text-black" fill="currentColor" viewBox="0 0 20 20">
-                                    <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/>
-                                </svg>
+                                <span class="text-black text-xl">📞</span>
                             </div>
                             <div>
                                 <h3 class="text-xl font-semibold mb-2">Téléphone</h3>
@@ -529,9 +602,7 @@
 
                         <div class="flex items-start space-x-4">
                             <div class="w-12 h-12 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                                <svg class="w-6 h-6 text-black" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
-                                </svg>
+                                <span class="text-black text-xl">📍</span>
                             </div>
                             <div>
                                 <h3 class="text-xl font-semibold mb-2">Adresse</h3>
@@ -558,7 +629,7 @@
                                 <textarea required rows="5" class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:border-yellow-400 focus:outline-none transition-colors resize-none"></textarea>
                             </div>
                             <button type="submit" class="w-full btn-premium py-4 rounded-lg font-semibold text-lg">
-                                Envoyer le message
+                                📤 Envoyer le message
                             </button>
                         </form>
                     </div>
@@ -577,6 +648,22 @@
                 <p class="text-lg text-gray-300 mb-8 max-w-2xl mx-auto">
                     Découvrez notre sélection exclusive de véhicules premium
                 </p>
+                
+                <!-- Filtres -->
+                <div class="flex flex-wrap justify-center gap-4 mb-8">
+                    <button onclick="filterVehicles('all')" class="filter-btn active px-4 py-2 rounded-lg font-medium transition-all" id="filter-all">
+                        🚗 Tous
+                    </button>
+                    <button onclick="filterVehicles('Disponible')" class="filter-btn bg-gray-800 text-gray-300 hover:bg-gray-700 px-4 py-2 rounded-lg font-medium transition-all" id="filter-available">
+                        ✅ Disponibles
+                    </button>
+                    <button onclick="filterVehicles('Berline')" class="filter-btn bg-gray-800 text-gray-300 hover:bg-gray-700 px-4 py-2 rounded-lg font-medium transition-all" id="filter-berline">
+                        🚗 Berlines
+                    </button>
+                    <button onclick="filterVehicles('SUV')" class="filter-btn bg-gray-800 text-gray-300 hover:bg-gray-700 px-4 py-2 rounded-lg font-medium transition-all" id="filter-suv">
+                        🚙 SUV
+                    </button>
+                </div>
             </div>
         </section>
 
@@ -594,17 +681,101 @@
 
     <script>
         // Configuration Supabase
+        const SUPABASE_URL = 'https://wawrxekxeqljwdeqjgup.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_aLN6iFYn9CceZ0juFqGF8A_ASWUPKkr';
         let supabase = null;
         let isLoggedIn = false;
+        let allVehicles = [];
+        let currentFilter = 'all';
+        let isConnected = false;
+
+        // Données démo pour fallback
+        const demoVehicles = [
+            {
+                id: 'demo-1',
+                brand: 'BMW',
+                model: 'Série 3',
+                year: 2021,
+                price: 35000,
+                mileage: 45000,
+                power: 190,
+                fuel: 'Diesel',
+                transmission: 'Automatique',
+                category: 'Berline',
+                status: 'Disponible',
+                description: 'Véhicule en excellent état, entretien suivi en concession BMW.',
+                images: [],
+                features: ['Climatisation', 'GPS', 'Bluetooth', 'Régulateur de vitesse'],
+                created_at: new Date().toISOString()
+            },
+            {
+                id: 'demo-2',
+                brand: 'Mercedes',
+                model: 'Classe C',
+                year: 2020,
+                price: 42000,
+                mileage: 38000,
+                power: 220,
+                fuel: 'Essence',
+                transmission: 'Automatique',
+                category: 'Berline',
+                status: 'Disponible',
+                description: 'Mercedes Classe C en parfait état, toutes options.',
+                images: [],
+                features: ['Climatisation', 'GPS', 'Sièges chauffants', 'Toit ouvrant'],
+                created_at: new Date().toISOString()
+            },
+            {
+                id: 'demo-3',
+                brand: 'Audi',
+                model: 'Q5',
+                year: 2022,
+                price: 48000,
+                mileage: 25000,
+                power: 245,
+                fuel: 'Hybride',
+                transmission: 'Automatique',
+                category: 'SUV',
+                status: 'Réservé',
+                description: 'SUV hybride dernière génération, très économique.',
+                images: [],
+                features: ['Climatisation', 'GPS', 'Caméra de recul', 'Aide au stationnement'],
+                created_at: new Date().toISOString()
+            }
+        ];
 
         // Initialisation au chargement
         document.addEventListener('DOMContentLoaded', function() {
             initializeApp();
+            setupSearch();
         });
 
         // Initialisation de l'application
-        function initializeApp() {
-            initializeSupabase();
+        async function initializeApp() {
+            console.log('🚀 GoAuto95 v50 - Initialisation...');
+            
+            // Initialiser Supabase
+            try {
+                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                console.log('✅ Supabase initialisé');
+                
+                // Tester la connexion
+                const { data, error } = await supabase.from('vehicles').select('count', { count: 'exact', head: true });
+                
+                if (error) {
+                    console.warn('⚠️ Erreur de connexion à la base:', error.message);
+                    isConnected = false;
+                    updateConnectionStatus('disconnected');
+                } else {
+                    console.log('✅ Connexion à la base de données réussie');
+                    isConnected = true;
+                    updateConnectionStatus('connected');
+                }
+            } catch (error) {
+                console.error('❌ Erreur d\'initialisation Supabase:', error);
+                isConnected = false;
+                updateConnectionStatus('disconnected');
+            }
             
             const loginStatus = localStorage.getItem('isLoggedIn');
             if (loginStatus === 'true') {
@@ -614,81 +785,37 @@
             loadVehiclesDisplay();
         }
 
-        // Initialisation de Supabase
-        async function initializeSupabase() {
-            updateDbConnectionStatus('testing', 'Connexion à Supabase...');
+        // Mise à jour du statut de connexion
+        function updateConnectionStatus(status) {
+            const statusElements = document.querySelectorAll('#connection-status, #db-connection-status');
             
-            try {
-                // Configuration Supabase intégrée
-                const SUPABASE_URL = 'https://wawrxekxeqljwdeqjgup.supabase.co';
-                const SUPABASE_KEY = 'sb_publishable_aLN6iFYn9CceZ0juFqGF8A_ASWUPKkr';
+            statusElements.forEach(element => {
+                element.className = `db-status ${status}`;
                 
-                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-                
-                // Test de connexion aux tables existantes
-                const { data, error } = await supabase
-                    .from('admin_credentials')
-                    .select('*')
-                    .limit(1);
-
-                if (error) {
-                    console.warn('Erreur lors du test:', error);
-                    updateDbConnectionStatus('disconnected', 'Erreur de connexion');
-                } else {
-                    console.log('✅ Supabase connecté avec succès');
-                    updateDbConnectionStatus('connected', 'Supabase connecté');
-                }
-                
-                return true;
-            } catch (error) {
-                console.error('Erreur Supabase:', error);
-                updateDbConnectionStatus('disconnected', 'Erreur de connexion');
-                return false;
-            }
-        }
-
-        // Mettre à jour le statut de connexion
-        function updateDbConnectionStatus(status, message) {
-            const statusElement = document.getElementById('connection-status');
-            const dbStatusElement = document.getElementById('db-connection-status');
-            
-            const statusClasses = {
-                testing: 'db-status testing',
-                connected: 'db-status connected',
-                disconnected: 'db-status disconnected'
-            };
-            
-            if (statusElement) {
-                statusElement.className = statusClasses[status];
-                statusElement.innerHTML = `
-                    <div class="flex items-center space-x-2">
-                        <div class="w-2 h-2 bg-current rounded-full"></div>
-                        <span>${message}</span>
-                    </div>
-                `;
-            }
-            
-            if (dbStatusElement) {
-                dbStatusElement.className = statusClasses[status];
-                if (status === 'testing') {
-                    dbStatusElement.innerHTML = `
-                        <div class="flex items-center justify-center space-x-2">
-                            <div class="loading w-4 h-4"></div>
-                            <span>${message}</span>
-                        </div>
-                    `;
-                } else {
-                    dbStatusElement.innerHTML = `
-                        <div class="flex items-center justify-center space-x-2">
+                if (status === 'connected') {
+                    element.innerHTML = `
+                        <div class="flex items-center space-x-2">
                             <div class="w-2 h-2 bg-current rounded-full"></div>
-                            <span>${message}</span>
+                            <span>✅ Base connectée</span>
+                        </div>
+                    `;
+                } else if (status === 'disconnected') {
+                    element.innerHTML = `
+                        <div class="flex items-center space-x-2">
+                            <div class="w-2 h-2 bg-current rounded-full"></div>
+                            <span>❌ Base déconnectée</span>
+                        </div>
+                    `;
+                } else {
+                    element.innerHTML = `
+                        <div class="flex items-center space-x-2">
+                            <div class="w-2 h-2 bg-current rounded-full"></div>
+                            <span>🔧 Mode Démo</span>
                         </div>
                     `;
                 }
-            }
+            });
         }
-
-
 
         // Notifications
         function showNotification(message, type = 'success') {
@@ -714,7 +841,7 @@
             }, 5000);
         }
 
-        // Connexion avec lecture depuis Supabase
+        // Connexion admin
         async function handleLogin(event) {
             event.preventDefault();
             
@@ -725,72 +852,73 @@
             const loginBtnText = document.getElementById('login-btn-text');
             const loginLoading = document.getElementById('login-loading');
             
-            loginBtnText.textContent = 'Vérification...';
+            loginBtnText.textContent = 'Connexion...';
             loginLoading.classList.remove('hidden');
             loginBtn.disabled = true;
             errorDiv.classList.add('hidden');
 
-            try {
-                const credentials = await getStoredCredentialsFromSupabase();
-                
-                if (email === credentials.email && password === credentials.password) {
+            if (isConnected && supabase) {
+                try {
+                    console.log('🔐 Tentative de connexion Supabase...');
+                    const { data, error } = await supabase.auth.signInWithPassword({
+                        email: email,
+                        password: password
+                    });
+
+                    if (error) {
+                        console.error('❌ Erreur de connexion Supabase:', error.message);
+                        
+                        // Fallback sur les identifiants démo
+                        if (email === 'admin' && password === 'auto95admin') {
+                            console.log('🔧 Connexion démo acceptée');
+                            isLoggedIn = true;
+                            localStorage.setItem('isLoggedIn', 'true');
+                            showPage('admin');
+                            showNotification('🎉 Connexion réussie ! (Mode démo)', 'success');
+                        } else {
+                            document.getElementById('login-error-text').textContent = error.message || 'Identifiants incorrects';
+                            errorDiv.classList.remove('hidden');
+                            showNotification('❌ Erreur de connexion', 'error');
+                        }
+                    } else {
+                        console.log('✅ Connexion Supabase réussie');
+                        isLoggedIn = true;
+                        localStorage.setItem('isLoggedIn', 'true');
+                        showPage('admin');
+                        showNotification('🎉 Connexion réussie !', 'success');
+                    }
+                } catch (error) {
+                    console.error('❌ Erreur de connexion:', error);
+                    
+                    // Fallback sur les identifiants démo
+                    if (email === 'admin' && password === 'auto95admin') {
+                        isLoggedIn = true;
+                        localStorage.setItem('isLoggedIn', 'true');
+                        showPage('admin');
+                        showNotification('🎉 Connexion réussie ! (Mode démo)', 'success');
+                    } else {
+                        document.getElementById('login-error-text').textContent = 'Identifiants incorrects';
+                        errorDiv.classList.remove('hidden');
+                        showNotification('❌ Erreur de connexion', 'error');
+                    }
+                }
+            } else {
+                // Mode démo uniquement
+                if (email === 'admin' && password === 'auto95admin') {
                     isLoggedIn = true;
                     localStorage.setItem('isLoggedIn', 'true');
                     showPage('admin');
-                    showNotification('Connexion réussie !', 'success');
+                    showNotification('🎉 Connexion réussie ! (Mode démo)', 'success');
                 } else {
-                    document.getElementById('login-error-text').textContent = 'Identifiants incorrects';
+                    document.getElementById('login-error-text').textContent = 'Identifiants incorrects (admin / auto95admin)';
                     errorDiv.classList.remove('hidden');
-                    showNotification('Erreur de connexion', 'error');
+                    showNotification('❌ Erreur de connexion', 'error');
                 }
-                
-            } catch (error) {
-                console.error('Erreur lors de la vérification:', error);
-                document.getElementById('login-error-text').textContent = 'Erreur de connexion à la base de données';
-                errorDiv.classList.remove('hidden');
-                showNotification('Erreur de connexion à Supabase', 'error');
-            } finally {
-                loginBtnText.textContent = 'Se connecter';
-                loginLoading.classList.add('hidden');
-                loginBtn.disabled = false;
             }
-        }
-
-        // Récupérer les identifiants depuis Supabase
-        async function getStoredCredentialsFromSupabase() {
-            try {
-                if (!supabase) {
-                    throw new Error('Supabase non initialisé');
-                }
-
-                const { data, error } = await supabase
-                    .from('admin_credentials')
-                    .select('*')
-                    .limit(1)
-                    .single();
-
-                if (error) {
-                    throw error;
-                }
-
-                if (data) {
-                    return { 
-                        email: data.email, 
-                        password: data.password,
-                        updated_at: data.updated_at 
-                    };
-                } else {
-                    throw new Error('Aucun identifiant trouvé');
-                }
-                
-            } catch (error) {
-                console.warn('Erreur Supabase, utilisation des valeurs par défaut:', error);
-                return { 
-                    email: 'admin', 
-                    password: 'auto95admin',
-                    updated_at: new Date().toISOString()
-                };
-            }
+            
+            loginBtnText.textContent = isConnected ? 'Se connecter' : 'Se connecter (Démo)';
+            loginLoading.classList.add('hidden');
+            loginBtn.disabled = false;
         }
 
         // Déconnexion
@@ -798,7 +926,7 @@
             isLoggedIn = false;
             localStorage.setItem('isLoggedIn', 'false');
             showPage('login');
-            showNotification('Déconnexion réussie', 'success');
+            showNotification('👋 Déconnexion réussie', 'success');
         }
 
         // Navigation
@@ -838,29 +966,45 @@
 
             grid.innerHTML = '<div class="text-center py-12 col-span-full text-gray-400"><div class="loading mx-auto mb-4"></div><p>Chargement des véhicules...</p></div>';
 
-            try {
-                let vehicles = [];
-
-                if (supabase) {
-                    const { data, error } = await supabase
+            if (isConnected && supabase) {
+                try {
+                    console.log('🔄 Chargement depuis Supabase...');
+                    const { data: vehicles, error } = await supabase
                         .from('vehicles')
                         .select('*')
                         .order('created_at', { ascending: false });
 
                     if (error) {
-                        console.warn('Erreur lors du chargement des véhicules:', error);
-                        vehicles = [];
-                    } else {
-                        vehicles = data || [];
+                        console.error('❌ Erreur lors du chargement:', error);
+                        throw error;
                     }
+
+                    console.log('✅ Véhicules chargés depuis Supabase:', vehicles.length);
+                    allVehicles = vehicles || [];
+                    displayVehicles(allVehicles);
+                    
+                    if (vehicles.length === 0) {
+                        showNotification('ℹ️ Aucun véhicule dans la base de données', 'info');
+                    }
+                } catch (error) {
+                    console.error('❌ Erreur de chargement, passage en mode démo:', error);
+                    isConnected = false;
+                    updateConnectionStatus('disconnected');
+                    loadDemoVehicles();
                 }
-
-                displayVehicles(vehicles);
-
-            } catch (error) {
-                console.error('Erreur lors du chargement des véhicules:', error);
-                grid.innerHTML = '<div class="text-center py-12 col-span-full text-red-400"><p>Erreur lors du chargement des véhicules</p></div>';
+            } else {
+                console.log('🔧 Mode démo - Utilisation des véhicules de démonstration');
+                loadDemoVehicles();
             }
+        }
+
+        // Charger les véhicules démo
+        function loadDemoVehicles() {
+            setTimeout(() => {
+                allVehicles = demoVehicles;
+                displayVehicles(demoVehicles);
+                showNotification('🔧 Mode démo activé - Données d\'exemple', 'info');
+            }, 1000);
         }
 
         // Afficher les véhicules
@@ -871,7 +1015,7 @@
             grid.innerHTML = '';
 
             if (vehicles.length === 0) {
-                grid.innerHTML = '<div class="text-center py-12 col-span-full text-gray-400"><p>Aucun véhicule disponible</p></div>';
+                grid.innerHTML = '<div class="text-center py-12 col-span-full text-gray-400"><p>🚗 Aucun véhicule disponible</p></div>';
                 return;
             }
 
@@ -882,46 +1026,209 @@
                 const statusColor = vehicle.status === 'Disponible' ? 'bg-green-500' : 
                                   vehicle.status === 'Réservé' ? 'bg-orange-500' : 'bg-red-500';
 
+                const statusIcon = vehicle.status === 'Disponible' ? '✅' : 
+                                 vehicle.status === 'Réservé' ? '⏳' : '💰';
+
                 const vehicleCard = document.createElement('div');
-                vehicleCard.className = 'vehicle-card card-hover rounded-2xl overflow-hidden';
+                vehicleCard.className = 'vehicle-card card-hover rounded-2xl overflow-hidden cursor-pointer';
+                vehicleCard.onclick = () => showVehicleDetails(vehicle);
 
                 vehicleCard.innerHTML = `
                     <div class="relative h-64 bg-gradient-to-br from-gray-700 to-gray-800 overflow-hidden">
-                        <div class="absolute top-4 right-4 ${statusColor} text-white px-3 py-1 rounded-full text-sm font-medium">
-                            ${vehicle.status}
+                        <div class="absolute top-4 right-4 ${statusColor} text-white px-3 py-1 rounded-full text-sm font-medium flex items-center space-x-1">
+                            <span>${statusIcon}</span>
+                            <span>${vehicle.status}</span>
                         </div>
-                        ${mainImage ? 
-                            `<img src="${mainImage}" alt="${vehicle.brand} ${vehicle.model}" class="w-full h-full object-cover">` :
-                            `<div class="w-full h-full flex items-center justify-center">
-                                <svg class="w-24 h-24 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
-                                    <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4zM18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9z"/>
-                                </svg>
-                            </div>`
-                        }
+                        <div class="w-full h-full flex items-center justify-center">
+                            <span class="text-6xl">🚗</span>
+                        </div>
                     </div>
                     <div class="p-6">
                         <div class="flex justify-between items-start mb-4">
                             <div>
                                 <h3 class="text-xl font-semibold mb-1">${vehicle.brand} ${vehicle.model}</h3>
-                                <p class="text-gray-400">${vehicle.year} • ${parseInt(vehicle.mileage).toLocaleString()} km</p>
+                                <p class="text-gray-400">📅 ${vehicle.year} • 🛣️ ${parseInt(vehicle.mileage).toLocaleString()} km</p>
                             </div>
                             <div class="text-right">
                                 <p class="text-2xl font-bold gold-accent">${parseInt(vehicle.price).toLocaleString()} €</p>
                             </div>
                         </div>
                         <div class="flex flex-wrap gap-2 mb-4">
-                            <span class="bg-gray-800 px-3 py-1 rounded-full text-sm">${vehicle.transmission}</span>
-                            <span class="bg-gray-800 px-3 py-1 rounded-full text-sm">${vehicle.fuel}</span>
-                            <span class="bg-gray-800 px-3 py-1 rounded-full text-sm">${vehicle.power} ch</span>
+                            <span class="bg-gray-800 px-3 py-1 rounded-full text-sm">⚙️ ${vehicle.transmission}</span>
+                            <span class="bg-gray-800 px-3 py-1 rounded-full text-sm">⛽ ${vehicle.fuel}</span>
+                            <span class="bg-gray-800 px-3 py-1 rounded-full text-sm">⚡ ${vehicle.power} ch</span>
+                            ${vehicle.category ? `<span class="bg-yellow-400/20 text-yellow-400 px-3 py-1 rounded-full text-sm">🏷️ ${vehicle.category}</span>` : ''}
                         </div>
-                        <button class="w-full ${vehicle.status === 'Vendu' ? 'bg-gray-700 cursor-not-allowed opacity-50' : 'btn-premium'} py-3 rounded-lg font-semibold">
-                            ${vehicle.status === 'Vendu' ? 'Véhicule vendu' : 'Voir les détails'}
+                        ${vehicle.features && vehicle.features.length > 0 ? `
+                            <div class="mb-4">
+                                <p class="text-xs text-gray-400 mb-2">🛠️ Équipements :</p>
+                                <div class="features-grid">
+                                    ${vehicle.features.slice(0, 4).map(feature => 
+                                        `<span class="feature-tag">${feature}</span>`
+                                    ).join('')}
+                                    ${vehicle.features.length > 4 ? `<span class="feature-tag">+${vehicle.features.length - 4}</span>` : ''}
+                                </div>
+                            </div>
+                        ` : ''}
+                        <button class="w-full ${vehicle.status === 'Vendu' ? 'bg-gray-700 cursor-not-allowed opacity-50' : 'btn-premium hover:scale-105'} py-3 rounded-lg font-semibold transition-all">
+                            ${vehicle.status === 'Vendu' ? '💰 Véhicule vendu' : '👁️ Voir les détails'}
                         </button>
                     </div>
                 `;
 
                 grid.appendChild(vehicleCard);
             });
+        }
+
+        // Afficher les détails d'un véhicule
+        function showVehicleDetails(vehicle) {
+            const modal = document.getElementById('vehicle-modal');
+            const modalTitle = document.getElementById('modal-title');
+            const modalContent = document.getElementById('modal-content');
+            
+            modalTitle.textContent = `${vehicle.brand} ${vehicle.model} (${vehicle.year})`;
+            
+            const features = vehicle.features || [];
+            
+            modalContent.innerHTML = `
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div>
+                        <div class="bg-gray-800 rounded-lg h-64 flex items-center justify-center mb-6">
+                            <span class="text-6xl">🚗</span>
+                        </div>
+                        
+                        ${vehicle.description ? `
+                            <div class="bg-gray-800 rounded-lg p-4">
+                                <h4 class="font-semibold mb-2">📝 Description</h4>
+                                <p class="text-gray-300">${vehicle.description}</p>
+                            </div>
+                        ` : ''}
+                    </div>
+                    
+                    <div class="space-y-6">
+                        <div class="bg-gray-800 rounded-lg p-4">
+                            <h4 class="font-semibold mb-4 gold-accent">💰 Prix : ${parseInt(vehicle.price).toLocaleString()} €</h4>
+                            <div class="grid grid-cols-2 gap-4 text-sm">
+                                <div><span class="text-gray-400">📅 Année :</span> ${vehicle.year}</div>
+                                <div><span class="text-gray-400">🛣️ Kilométrage :</span> ${parseInt(vehicle.mileage).toLocaleString()} km</div>
+                                <div><span class="text-gray-400">⚡ Puissance :</span> ${vehicle.power} ch</div>
+                                <div><span class="text-gray-400">⛽ Carburant :</span> ${vehicle.fuel}</div>
+                                <div><span class="text-gray-400">⚙️ Transmission :</span> ${vehicle.transmission}</div>
+                                <div><span class="text-gray-400">🏷️ Catégorie :</span> ${vehicle.category}</div>
+                            </div>
+                        </div>
+                        
+                        ${features.length > 0 ? `
+                            <div class="bg-gray-800 rounded-lg p-4">
+                                <h4 class="font-semibold mb-3">🛠️ Équipements</h4>
+                                <div class="features-grid">
+                                    ${features.map(feature => `<span class="feature-tag">${feature}</span>`).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+                        
+                        <div class="bg-gray-800 rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-4">
+                                <span class="font-semibold">📊 Statut :</span>
+                                <span class="px-3 py-1 rounded-full text-sm ${
+                                    vehicle.status === 'Disponible' ? 'bg-green-500/20 text-green-400' :
+                                    vehicle.status === 'Réservé' ? 'bg-orange-500/20 text-orange-400' :
+                                    'bg-red-500/20 text-red-400'
+                                }">
+                                    ${vehicle.status === 'Disponible' ? '✅' : vehicle.status === 'Réservé' ? '⏳' : '💰'} ${vehicle.status}
+                                </span>
+                            </div>
+                            
+                            ${vehicle.status !== 'Vendu' ? `
+                                <button class="w-full btn-premium py-3 rounded-lg font-semibold">
+                                    📞 Contacter pour ce véhicule
+                                </button>
+                            ` : `
+                                <button class="w-full bg-gray-700 py-3 rounded-lg font-semibold opacity-50 cursor-not-allowed">
+                                    💰 Véhicule déjà vendu
+                                </button>
+                            `}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            modal.classList.add('show');
+        }
+
+        // Fermer le modal
+        function closeVehicleModal() {
+            document.getElementById('vehicle-modal').classList.remove('show');
+        }
+
+        // Filtrer les véhicules
+        function filterVehicles(filter) {
+            currentFilter = filter;
+            
+            // Mettre à jour les boutons de filtre
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+                btn.className = 'filter-btn bg-gray-800 text-gray-300 hover:bg-gray-700 px-4 py-2 rounded-lg font-medium transition-all';
+            });
+            
+            const activeBtn = document.getElementById(`filter-${filter === 'all' ? 'all' : filter.toLowerCase()}`);
+            if (activeBtn) {
+                activeBtn.classList.add('active');
+                activeBtn.className = 'filter-btn active px-4 py-2 rounded-lg font-medium transition-all';
+            }
+            
+            // Filtrer les véhicules
+            let filteredVehicles = allVehicles;
+            
+            if (filter !== 'all') {
+                filteredVehicles = allVehicles.filter(vehicle => 
+                    vehicle.status === filter || 
+                    vehicle.category === filter || 
+                    vehicle.fuel === filter
+                );
+            }
+            
+            displayVehicles(filteredVehicles);
+        }
+
+        // Configuration de la recherche
+        function setupSearch() {
+            const searchInput = document.getElementById('search-vehicles');
+            const statusFilter = document.getElementById('filter-status');
+            
+            if (searchInput) {
+                searchInput.addEventListener('input', performSearch);
+            }
+            
+            if (statusFilter) {
+                statusFilter.addEventListener('change', performSearch);
+            }
+        }
+
+        // Effectuer la recherche
+        function performSearch() {
+            const searchTerm = document.getElementById('search-vehicles')?.value.toLowerCase() || '';
+            const statusFilter = document.getElementById('filter-status')?.value || '';
+            
+            let filteredVehicles = allVehicles;
+            
+            // Filtrer par terme de recherche
+            if (searchTerm) {
+                filteredVehicles = filteredVehicles.filter(vehicle =>
+                    vehicle.brand.toLowerCase().includes(searchTerm) ||
+                    vehicle.model.toLowerCase().includes(searchTerm) ||
+                    vehicle.category.toLowerCase().includes(searchTerm) ||
+                    vehicle.fuel.toLowerCase().includes(searchTerm)
+                );
+            }
+            
+            // Filtrer par statut
+            if (statusFilter) {
+                filteredVehicles = filteredVehicles.filter(vehicle => vehicle.status === statusFilter);
+            }
+            
+            // Afficher dans la section admin
+            displayAdminVehicles(filteredVehicles);
         }
 
         // FONCTIONS ADMINISTRATION
@@ -960,121 +1267,252 @@
             }
             
             // Charger les données selon la section
-            if (sectionId === 'dashboard') {
-                loadDashboardData();
-            } else if (sectionId === 'vehicles') {
+            if (sectionId === 'vehicles') {
                 loadAdminVehicles();
-            }
-        }
-
-        // Charger les données du tableau de bord
-        async function loadDashboardData() {
-            try {
-                if (!supabase) return;
-
-                const { data: vehicles, error } = await supabase
-                    .from('vehicles')
-                    .select('*');
-
-                if (error) {
-                    console.error('Erreur chargement dashboard:', error);
-                    return;
-                }
-
-                const total = vehicles.length;
-                const available = vehicles.filter(v => v.status === 'Disponible').length;
-                const reserved = vehicles.filter(v => v.status === 'Réservé').length;
-                const sold = vehicles.filter(v => v.status === 'Vendu').length;
-
-                document.getElementById('total-vehicles').textContent = total;
-                document.getElementById('available-vehicles').textContent = available;
-                document.getElementById('reserved-vehicles').textContent = reserved;
-                document.getElementById('sold-vehicles').textContent = sold;
-
-                // Afficher les derniers véhicules
-                const recentVehicles = vehicles.slice(0, 5);
-                const recentContainer = document.getElementById('recent-vehicles');
-                
-                if (recentVehicles.length === 0) {
-                    recentContainer.innerHTML = '<div class="text-center py-8 text-gray-400"><p>Aucun véhicule</p></div>';
-                    return;
-                }
-
-                recentContainer.innerHTML = '';
-                recentVehicles.forEach(vehicle => {
-                    const vehicleDiv = document.createElement('div');
-                    vehicleDiv.className = 'flex items-center justify-between p-4 bg-gray-800 rounded-lg';
-                    vehicleDiv.innerHTML = `
-                        <div>
-                            <h4 class="font-semibold">${vehicle.brand} ${vehicle.model}</h4>
-                            <p class="text-sm text-gray-400">${vehicle.year} • ${parseInt(vehicle.price).toLocaleString()} €</p>
-                        </div>
-                        <span class="px-3 py-1 rounded-full text-sm ${
-                            vehicle.status === 'Disponible' ? 'bg-green-500/20 text-green-400' :
-                            vehicle.status === 'Réservé' ? 'bg-orange-500/20 text-orange-400' :
-                            'bg-red-500/20 text-red-400'
-                        }">${vehicle.status}</span>
-                    `;
-                    recentContainer.appendChild(vehicleDiv);
-                });
-
-            } catch (error) {
-                console.error('Erreur dashboard:', error);
+            } else if (sectionId === 'dashboard') {
+                loadAdminVehicles(); // Pour les stats
             }
         }
 
         // Charger les véhicules pour l'admin
         async function loadAdminVehicles() {
             const container = document.getElementById('admin-vehicles-list');
-            container.innerHTML = '<div class="text-center py-8 text-gray-400"><div class="loading mx-auto mb-4"></div><p>Chargement...</p></div>';
+            if (container) {
+                container.innerHTML = '<div class="text-center py-8 text-gray-400"><div class="loading mx-auto mb-4"></div><p>Chargement...</p></div>';
+            }
 
-            try {
-                if (!supabase) return;
+            if (isConnected && supabase) {
+                try {
+                    console.log('🔄 Chargement admin depuis Supabase...');
+                    const { data: vehicles, error } = await supabase
+                        .from('vehicles')
+                        .select('*')
+                        .order('created_at', { ascending: false });
 
-                const { data: vehicles, error } = await supabase
-                    .from('vehicles')
-                    .select('*')
-                    .order('created_at', { ascending: false });
+                    if (error) {
+                        console.error('❌ Erreur lors du chargement admin:', error);
+                        throw error;
+                    }
 
-                if (error) {
-                    container.innerHTML = '<div class="text-center py-8 text-red-400"><p>Erreur de chargement</p></div>';
-                    return;
+                    console.log('✅ Véhicules admin chargés:', vehicles.length);
+                    allVehicles = vehicles || [];
+                    if (container) displayAdminVehicles(allVehicles);
+                    
+                    // Mettre à jour les statistiques
+                    updateDashboardStats(allVehicles);
+                    updateAnalytics(allVehicles);
+                    
+                } catch (error) {
+                    console.error('❌ Erreur de chargement admin, mode démo:', error);
+                    setTimeout(() => {
+                        allVehicles = demoVehicles;
+                        if (container) displayAdminVehicles(allVehicles);
+                        updateDashboardStats(allVehicles);
+                        updateAnalytics(allVehicles);
+                    }, 500);
                 }
+            } else {
+                setTimeout(() => {
+                    allVehicles = demoVehicles;
+                    if (container) displayAdminVehicles(allVehicles);
+                    updateDashboardStats(allVehicles);
+                    updateAnalytics(allVehicles);
+                }, 500);
+            }
+        }
 
+        // Mettre à jour les statistiques du tableau de bord
+        function updateDashboardStats(vehicles) {
+            const total = vehicles.length;
+            const available = vehicles.filter(v => v.status === 'Disponible').length;
+            const reserved = vehicles.filter(v => v.status === 'Réservé').length;
+            const sold = vehicles.filter(v => v.status === 'Vendu').length;
+            
+            document.getElementById('total-vehicles').textContent = total;
+            document.getElementById('available-vehicles').textContent = available;
+            document.getElementById('reserved-vehicles').textContent = reserved;
+            document.getElementById('sold-vehicles').textContent = sold;
+            
+            // Mettre à jour les véhicules récents
+            const recentContainer = document.getElementById('recent-vehicles');
+            const recentCount = document.getElementById('recent-count');
+            
+            if (recentContainer && recentCount) {
+                recentCount.textContent = Math.min(vehicles.length, 3);
+                
                 if (vehicles.length === 0) {
-                    container.innerHTML = '<div class="text-center py-8 text-gray-400"><p>Aucun véhicule</p></div>';
-                    return;
+                    recentContainer.innerHTML = '<div class="text-center py-8 text-gray-400"><p>Aucun véhicule</p></div>';
+                } else {
+                    recentContainer.innerHTML = '';
+                    vehicles.slice(0, 3).forEach(vehicle => {
+                        const statusColor = vehicle.status === 'Disponible' ? 'bg-green-500/20 text-green-400' : 
+                                          vehicle.status === 'Réservé' ? 'bg-orange-500/20 text-orange-400' : 'bg-red-500/20 text-red-400';
+                        const statusIcon = vehicle.status === 'Disponible' ? '✅' : vehicle.status === 'Réservé' ? '⏳' : '💰';
+                        
+                        const vehicleDiv = document.createElement('div');
+                        vehicleDiv.className = 'flex items-center justify-between p-4 bg-gray-800 rounded-lg';
+                        vehicleDiv.innerHTML = `
+                            <div>
+                                <h4 class="font-semibold">🚗 ${vehicle.brand} ${vehicle.model}</h4>
+                                <p class="text-sm text-gray-400">📅 ${vehicle.year} • 💰 ${parseInt(vehicle.price).toLocaleString()} €</p>
+                            </div>
+                            <span class="px-3 py-1 rounded-full text-sm ${statusColor}">${statusIcon} ${vehicle.status}</span>
+                        `;
+                        recentContainer.appendChild(vehicleDiv);
+                    });
                 }
+            }
+            
+            if (total > 0) {
+                const avgPrice = Math.round(vehicles.reduce((sum, v) => sum + v.price, 0) / total);
+                const avgMileage = Math.round(vehicles.reduce((sum, v) => sum + v.mileage, 0) / total);
+                
+                document.getElementById('avg-price').textContent = avgPrice.toLocaleString() + ' €';
+                document.getElementById('avg-mileage').textContent = avgMileage.toLocaleString() + ' km';
+                
+                // Marque et carburant populaires
+                const brands = vehicles.map(v => v.brand);
+                const fuels = vehicles.map(v => v.fuel);
+                
+                const popularBrand = brands.sort((a,b) =>
+                    brands.filter(v => v===a).length - brands.filter(v => v===b).length
+                ).pop();
+                
+                const popularFuel = fuels.sort((a,b) =>
+                    fuels.filter(v => v===a).length - fuels.filter(v => v===b).length
+                ).pop();
+                
+                document.getElementById('popular-brand').textContent = popularBrand || '-';
+                document.getElementById('popular-fuel').textContent = popularFuel || '-';
+            }
+        }
 
-                container.innerHTML = '';
-                vehicles.forEach(vehicle => {
-                    const vehicleDiv = document.createElement('div');
-                    vehicleDiv.className = 'bg-gray-800 rounded-lg p-4';
-                    vehicleDiv.innerHTML = `
-                        <div class="flex items-center justify-between">
-                            <div class="flex-1">
-                                <h4 class="font-semibold mb-1">${vehicle.brand} ${vehicle.model}</h4>
-                                <p class="text-sm text-gray-400">${vehicle.year} • ${parseInt(vehicle.mileage).toLocaleString()} km • ${parseInt(vehicle.price).toLocaleString()} €</p>
+        // Mettre à jour les analytiques
+        function updateAnalytics(vehicles) {
+            if (vehicles.length === 0) return;
+            
+            // Valeur totale
+            const totalValue = vehicles.reduce((sum, v) => sum + v.price, 0);
+            document.getElementById('total-value').textContent = totalValue.toLocaleString() + ' €';
+            
+            // Prix médian
+            const sortedPrices = vehicles.map(v => v.price).sort((a, b) => a - b);
+            const medianPrice = sortedPrices[Math.floor(sortedPrices.length / 2)];
+            document.getElementById('median-price').textContent = medianPrice.toLocaleString() + ' €';
+            
+            // Véhicule le plus cher
+            const mostExpensive = vehicles.reduce((max, v) => v.price > max.price ? v : max, vehicles[0]);
+            document.getElementById('most-expensive').textContent = `${mostExpensive.brand} ${mostExpensive.model}`;
+            
+            // Statistiques par marque
+            const brandStats = {};
+            vehicles.forEach(v => {
+                brandStats[v.brand] = (brandStats[v.brand] || 0) + 1;
+            });
+            
+            const brandContainer = document.getElementById('brand-stats');
+            if (brandContainer) {
+                brandContainer.innerHTML = '';
+                Object.entries(brandStats).forEach(([brand, count]) => {
+                    const percentage = (count / vehicles.length) * 100;
+                    const div = document.createElement('div');
+                    div.className = 'flex items-center justify-between mb-2';
+                    div.innerHTML = `
+                        <span class="text-sm">${brand}</span>
+                        <div class="flex items-center space-x-2">
+                            <div class="w-20 bg-gray-700 rounded-full h-2">
+                                <div class="bg-yellow-400 h-2 rounded-full" style="width: ${percentage}%"></div>
                             </div>
-                            <div class="flex items-center space-x-3">
-                                <span class="px-3 py-1 rounded-full text-sm ${
-                                    vehicle.status === 'Disponible' ? 'bg-green-500/20 text-green-400' :
-                                    vehicle.status === 'Réservé' ? 'bg-orange-500/20 text-orange-400' :
-                                    'bg-red-500/20 text-red-400'
-                                }">${vehicle.status}</span>
-                                <button onclick="deleteVehicle('${vehicle.id}')" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm transition-all">
-                                    Supprimer
-                                </button>
-                            </div>
+                            <span class="text-xs text-gray-400">${count}</span>
                         </div>
                     `;
-                    container.appendChild(vehicleDiv);
+                    brandContainer.appendChild(div);
                 });
-
-            } catch (error) {
-                console.error('Erreur chargement véhicules admin:', error);
-                container.innerHTML = '<div class="text-center py-8 text-red-400"><p>Erreur de chargement</p></div>';
             }
+            
+            // Statistiques par carburant
+            const fuelStats = {};
+            vehicles.forEach(v => {
+                fuelStats[v.fuel] = (fuelStats[v.fuel] || 0) + 1;
+            });
+            
+            const fuelContainer = document.getElementById('fuel-stats');
+            if (fuelContainer) {
+                fuelContainer.innerHTML = '';
+                Object.entries(fuelStats).forEach(([fuel, count]) => {
+                    const percentage = (count / vehicles.length) * 100;
+                    const fuelIcon = fuel === 'Diesel' ? '🛢️' : fuel === 'Essence' ? '⛽' : fuel === 'Hybride' ? '🔋' : '⚡';
+                    const div = document.createElement('div');
+                    div.className = 'flex items-center justify-between mb-2';
+                    div.innerHTML = `
+                        <span class="text-sm">${fuelIcon} ${fuel}</span>
+                        <div class="flex items-center space-x-2">
+                            <div class="w-20 bg-gray-700 rounded-full h-2">
+                                <div class="bg-blue-400 h-2 rounded-full" style="width: ${percentage}%"></div>
+                            </div>
+                            <span class="text-xs text-gray-400">${count}</span>
+                        </div>
+                    `;
+                    fuelContainer.appendChild(div);
+                });
+            }
+        }
+
+        // Afficher les véhicules dans l'admin
+        function displayAdminVehicles(vehicles) {
+            const container = document.getElementById('admin-vehicles-list');
+            const countElement = document.getElementById('vehicles-count');
+            
+            if (countElement) {
+                countElement.textContent = vehicles.length;
+            }
+            
+            if (!container) return;
+            
+            if (vehicles.length === 0) {
+                container.innerHTML = '<div class="text-center py-8 text-gray-400"><p>🚗 Aucun véhicule trouvé</p></div>';
+                return;
+            }
+
+            container.innerHTML = '';
+            vehicles.forEach(vehicle => {
+                const features = vehicle.features || [];
+                
+                const vehicleDiv = document.createElement('div');
+                vehicleDiv.className = 'bg-gray-800 rounded-lg p-4 hover:bg-gray-700 transition-colors';
+                vehicleDiv.innerHTML = `
+                    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                        <div class="flex items-center space-x-4 flex-1">
+                            <div class="w-16 h-16 bg-gray-700 rounded-lg flex items-center justify-center">
+                                <span class="text-2xl">🚗</span>
+                            </div>
+                            <div class="flex-1">
+                                <h4 class="font-semibold mb-1">🚗 ${vehicle.brand} ${vehicle.model}</h4>
+                                <p class="text-sm text-gray-400">📅 ${vehicle.year} • 🛣️ ${parseInt(vehicle.mileage).toLocaleString()} km • 💰 ${parseInt(vehicle.price).toLocaleString()} €</p>
+                                ${features.length > 0 ? `
+                                    <div class="features-grid mt-2">
+                                        ${features.slice(0, 3).map(feature => `<span class="feature-tag">${feature}</span>`).join('')}
+                                        ${features.length > 3 ? `<span class="feature-tag">+${features.length - 3}</span>` : ''}
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <span class="px-3 py-1 rounded-full text-sm ${
+                                vehicle.status === 'Disponible' ? 'bg-green-500/20 text-green-400' :
+                                vehicle.status === 'Réservé' ? 'bg-orange-500/20 text-orange-400' :
+                                'bg-red-500/20 text-red-400'
+                            }">
+                                ${vehicle.status === 'Disponible' ? '✅' : vehicle.status === 'Réservé' ? '⏳' : '💰'} ${vehicle.status}
+                            </span>
+                            <button onclick="showVehicleDetails(${JSON.stringify(vehicle).replace(/"/g, '&quot;')})" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm transition-all">
+                                👁️ Voir
+                            </button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(vehicleDiv);
+            });
         }
 
         // Ajouter un véhicule
@@ -1085,51 +1523,68 @@
             const btnText = document.getElementById('add-vehicle-btn-text');
             const loading = document.getElementById('add-vehicle-loading');
             
-            btnText.textContent = 'Ajout en cours...';
+            const formData = {
+                brand: document.getElementById('vehicle-brand').value.trim(),
+                model: document.getElementById('vehicle-model').value.trim(),
+                year: parseInt(document.getElementById('vehicle-year').value),
+                price: parseInt(document.getElementById('vehicle-price').value),
+                mileage: parseInt(document.getElementById('vehicle-mileage').value) || 0,
+                power: parseInt(document.getElementById('vehicle-power').value) || 150,
+                fuel: document.getElementById('vehicle-fuel').value,
+                transmission: document.getElementById('vehicle-transmission').value,
+                description: document.getElementById('vehicle-description').value.trim() || `${document.getElementById('vehicle-brand').value} ${document.getElementById('vehicle-model').value} en excellent état.`
+            };
+            
+            btnText.textContent = '⏳ Ajout en cours...';
             loading.classList.remove('hidden');
             btn.disabled = true;
 
-            try {
-                if (!supabase) {
-                    throw new Error('Supabase non connecté');
+            if (isConnected && supabase) {
+                try {
+                    console.log('💾 Ajout du véhicule dans Supabase...');
+                    
+                    const vehicleData = {
+                        ...formData,
+                        category: 'Berline', // Par défaut
+                        status: 'Disponible',
+                        features: ['Climatisation', 'Radio', 'Vitres électriques'],
+                        created_at: new Date().toISOString()
+                    };
+
+                    const { data, error } = await supabase
+                        .from('vehicles')
+                        .insert([vehicleData])
+                        .select();
+
+                    if (error) {
+                        console.error('❌ Erreur lors de l\'ajout:', error);
+                        throw error;
+                    }
+
+                    console.log('✅ Véhicule ajouté avec succès:', data);
+                    showNotification('✅ Véhicule ajouté avec succès !', 'success');
+                    resetAddVehicleForm();
+                    
+                    // Recharger la liste des véhicules
+                    if (document.getElementById('admin-vehicles').classList.contains('active')) {
+                        loadAdminVehicles();
+                    }
+                    
+                } catch (error) {
+                    console.error('❌ Erreur d\'ajout:', error);
+                    showNotification('❌ Erreur lors de l\'ajout du véhicule: ' + error.message, 'error');
                 }
-
-                const vehicleData = {
-                    brand: document.getElementById('vehicle-brand').value.trim(),
-                    model: document.getElementById('vehicle-model').value.trim(),
-                    year: parseInt(document.getElementById('vehicle-year').value),
-                    price: parseInt(document.getElementById('vehicle-price').value),
-                    mileage: parseInt(document.getElementById('vehicle-mileage').value),
-                    power: parseInt(document.getElementById('vehicle-power').value),
-                    fuel: document.getElementById('vehicle-fuel').value,
-                    transmission: document.getElementById('vehicle-transmission').value,
-                    status: document.getElementById('vehicle-status').value,
-                    description: document.getElementById('vehicle-description').value.trim(),
-                    images: document.getElementById('vehicle-image').value.trim() ? [document.getElementById('vehicle-image').value.trim()] : [],
-                    created_at: new Date().toISOString()
-                };
-
-                const { data, error } = await supabase
-                    .from('vehicles')
-                    .insert([vehicleData])
-                    .select();
-
-                if (error) {
-                    throw error;
-                }
-
-                showNotification('Véhicule ajouté avec succès !', 'success');
-                resetAddVehicleForm();
-                showAdminSection('vehicles');
-
-            } catch (error) {
-                console.error('Erreur ajout véhicule:', error);
-                showNotification('Erreur lors de l\'ajout du véhicule', 'error');
-            } finally {
-                btnText.textContent = 'Ajouter le véhicule';
-                loading.classList.add('hidden');
-                btn.disabled = false;
+            } else {
+                // Mode démo
+                setTimeout(() => {
+                    showNotification('🔧 Mode démo : Ajout simulé avec succès !', 'success');
+                    resetAddVehicleForm();
+                }, 1500);
             }
+            
+            btnText.textContent = isConnected ? '➕ Ajouter le véhicule' : '🔧 Simuler l\'ajout (Démo)';
+            loading.classList.add('hidden');
+            btn.disabled = false;
         }
 
         // Réinitialiser le formulaire d'ajout
@@ -1137,89 +1592,12 @@
             document.getElementById('add-vehicle-form').reset();
         }
 
-        // Supprimer un véhicule
-        async function deleteVehicle(vehicleId) {
-            if (!confirm('Êtes-vous sûr de vouloir supprimer ce véhicule ?')) {
-                return;
+        // Fermer le modal en cliquant à l'extérieur
+        document.getElementById('vehicle-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeVehicleModal();
             }
-
-            try {
-                if (!supabase) {
-                    throw new Error('Supabase non connecté');
-                }
-
-                const { error } = await supabase
-                    .from('vehicles')
-                    .delete()
-                    .eq('id', vehicleId);
-
-                if (error) {
-                    throw error;
-                }
-
-                showNotification('Véhicule supprimé avec succès', 'success');
-                loadAdminVehicles();
-
-            } catch (error) {
-                console.error('Erreur suppression véhicule:', error);
-                showNotification('Erreur lors de la suppression', 'error');
-            }
-        }
-
-        // Mettre à jour les identifiants
-        async function handleUpdateCredentials(event) {
-            event.preventDefault();
-            
-            const newUsername = document.getElementById('new-username').value.trim();
-            const newPassword = document.getElementById('new-password').value.trim();
-            
-            if (!newUsername || !newPassword) {
-                showNotification('Veuillez remplir tous les champs', 'error');
-                return;
-            }
-
-            const btn = document.getElementById('settings-btn');
-            const btnText = document.getElementById('settings-btn-text');
-            const loading = document.getElementById('settings-loading');
-            
-            btnText.textContent = 'Mise à jour...';
-            loading.classList.remove('hidden');
-            btn.disabled = true;
-
-            try {
-                if (!supabase) {
-                    throw new Error('Supabase non connecté');
-                }
-
-                const { error } = await supabase
-                    .from('admin_credentials')
-                    .update({
-                        email: newUsername,
-                        password: newPassword,
-                        updated_at: new Date().toISOString()
-                    })
-                    .eq('id', 1);
-
-                if (error) {
-                    throw error;
-                }
-
-                showNotification('Identifiants mis à jour avec succès', 'success');
-                
-                // Déconnexion automatique
-                setTimeout(() => {
-                    logout();
-                }, 2000);
-
-            } catch (error) {
-                console.error('Erreur mise à jour identifiants:', error);
-                showNotification('Erreur lors de la mise à jour', 'error');
-            } finally {
-                btnText.textContent = 'Mettre à jour';
-                loading.classList.add('hidden');
-                btn.disabled = false;
-            }
-        }
+        });
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'980f9cfff60f57fe',t:'MTc1ODE4NTYxMC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'980ffee377ca8bd2',t:'MTc1ODE4OTYxOS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
