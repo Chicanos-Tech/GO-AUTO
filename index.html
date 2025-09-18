@@ -72,7 +72,7 @@
         .db-status.disconnected { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
         .db-status.testing { background: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }
         .admin-section { display: none; }
-        .admin-section.active { display: block; }
+        .admin-section.active { display: block !important; }
         .admin-nav-btn.active { background: linear-gradient(135deg, #d4af37 0%, #f4e4a6 100%); color: #0f0f23; }
     </style>
 </head>
@@ -213,7 +213,7 @@
                 </div>
 
                 <!-- SECTION TABLEAU DE BORD -->
-                <div id="admin-dashboard" class="admin-section">
+                <div id="admin-dashboard" class="admin-section active">
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                         <div class="vehicle-card p-6 rounded-xl text-center">
                             <div class="text-3xl font-bold gold-accent mb-2" id="total-vehicles">0</div>
@@ -237,15 +237,17 @@
                         <h3 class="text-xl font-semibold mb-4">Derniers véhicules ajoutés</h3>
                         <div id="recent-vehicles" class="space-y-4">
                             <div class="text-center py-8 text-gray-400">
-                                <div class="loading mx-auto mb-4"></div>
-                                <p>Chargement...</p>
+                                <p>Aucun véhicule pour le moment</p>
+                                <button onclick="showAdminSection('add-vehicle')" class="btn-premium px-4 py-2 rounded-lg font-semibold mt-4">
+                                    ➕ Ajouter le premier véhicule
+                                </button>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- SECTION GESTION VÉHICULES -->
-                <div id="admin-vehicles" class="admin-section hidden">
+                <div id="admin-vehicles" class="admin-section">
                     <div class="vehicle-card p-6 rounded-xl mb-6">
                         <div class="flex justify-between items-center mb-4">
                             <h3 class="text-xl font-semibold">Gestion des véhicules</h3>
@@ -255,15 +257,17 @@
                         </div>
                         <div id="admin-vehicles-list" class="space-y-4">
                             <div class="text-center py-8 text-gray-400">
-                                <div class="loading mx-auto mb-4"></div>
-                                <p>Chargement des véhicules...</p>
+                                <p>Aucun véhicule pour le moment</p>
+                                <button onclick="showAdminSection('add-vehicle')" class="btn-premium px-4 py-2 rounded-lg font-semibold mt-4">
+                                    ➕ Ajouter le premier véhicule
+                                </button>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- SECTION AJOUTER VÉHICULE -->
-                <div id="admin-add-vehicle" class="admin-section hidden">
+                <div id="admin-add-vehicle" class="admin-section">
                     <div class="vehicle-card p-6 rounded-xl">
                         <h3 class="text-xl font-semibold mb-6">Ajouter un nouveau véhicule</h3>
                         <form id="add-vehicle-form" onsubmit="handleAddVehicle(event)" class="space-y-6">
@@ -924,8 +928,11 @@
 
         // Navigation admin
         function showAdminSection(sectionId) {
+            console.log('Affichage section:', sectionId);
+            
             // Masquer toutes les sections
             document.querySelectorAll('.admin-section').forEach(section => {
+                section.style.display = 'none';
                 section.classList.remove('active');
             });
             
@@ -936,7 +943,14 @@
             });
             
             // Afficher la section demandée
-            document.getElementById('admin-' + sectionId).classList.add('active');
+            const targetSection = document.getElementById('admin-' + sectionId);
+            if (targetSection) {
+                targetSection.style.display = 'block';
+                targetSection.classList.add('active');
+                console.log('Section affichée:', targetSection);
+            } else {
+                console.error('Section non trouvée:', 'admin-' + sectionId);
+            }
             
             // Activer le bouton correspondant
             const activeBtn = document.getElementById('nav-' + sectionId);
@@ -1207,5 +1221,5 @@
             }
         }
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'980f922357440c81',t:'MTc1ODE4NTE2NS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'980f9cfff60f57fe',t:'MTc1ODE4NTYxMC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
