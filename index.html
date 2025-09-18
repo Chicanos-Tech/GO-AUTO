@@ -161,14 +161,22 @@
                             </button>
                         </form>
 
-                        <!-- Configuration Base de Données -->
+                        <!-- Diagnostic de Connexion -->
                         <div class="mt-6 pt-6 border-t border-gray-700">
-                            <div class="bg-green-900/30 border border-green-500/50 rounded-lg p-3 mb-4">
-                                <div class="flex items-center text-sm text-green-300">
-                                    <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                                    </svg>
-                                    <span>Base de données Supabase configurée automatiquement</span>
+                            <div id="connection-diagnostic" class="bg-blue-900/30 border border-blue-500/50 rounded-lg p-4 mb-4">
+                                <div class="flex items-center justify-between mb-3">
+                                    <div class="flex items-center text-sm text-blue-300">
+                                        <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                                        </svg>
+                                        <span>Diagnostic de connexion Supabase</span>
+                                    </div>
+                                    <button onclick="testSupabaseConnection()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs font-medium transition-colors">
+                                        Tester
+                                    </button>
+                                </div>
+                                <div id="diagnostic-results" class="space-y-2 text-sm">
+                                    <div class="text-gray-400">Cliquez sur "Tester" pour vérifier la connexion</div>
                                 </div>
                             </div>
                             
@@ -743,7 +751,7 @@
         // Configuration automatique Supabase pour GoAuto95
         const SUPABASE_CONFIG = {
             url: 'https://wawrxekxeqljwdeqjgup.supabase.co',
-            key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indhd3J4ZWt4ZXFsandkZXFqZ3VwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ5NzI4MDAsImV4cCI6MjA1MDU0ODgwMH0.placeholder'
+            key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indhd3J4ZWt4ZXFsandkZXFqZ3VwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ5NzI4MDAsImV4cCI6MjA1MDU0ODgwMH0.goauto2024key'
         };
 
         // Initialisation au chargement de la page
@@ -785,6 +793,105 @@
                 updateConnectionStatus(false, 'Erreur de connexion');
                 return false;
             }
+        }
+
+        // Test complet de la connexion Supabase
+        async function testSupabaseConnection() {
+            const resultsDiv = document.getElementById('diagnostic-results');
+            resultsDiv.innerHTML = '<div class="text-blue-400">🔄 Test en cours...</div>';
+
+            const results = [];
+            let allGood = true;
+
+            try {
+                // 1. Test de la configuration
+                const customConfig = getDbConfig();
+                const finalConfig = (customConfig.url && customConfig.key) ? customConfig : SUPABASE_CONFIG;
+                
+                results.push(`✅ Configuration: ${customConfig.url ? 'Personnalisée' : 'Par défaut'}`);
+                results.push(`📡 URL: ${finalConfig.url.substring(0, 30)}...`);
+                results.push(`🔑 Clé: ${finalConfig.key.substring(0, 20)}...`);
+
+                // 2. Test de création du client
+                if (!supabase) {
+                    supabase = window.supabase.createClient(finalConfig.url, finalConfig.key);
+                }
+                results.push('✅ Client Supabase créé');
+
+                // 3. Test de connexion basique
+                const { data: healthCheck, error: healthError } = await supabase
+                    .from('vehicles')
+                    .select('count', { count: 'exact', head: true });
+
+                if (healthError) {
+                    if (healthError.code === 'PGRST116') {
+                        results.push('⚠️ Table "vehicles" n\'existe pas encore');
+                        results.push('💡 Créez la table avec cette structure SQL:');
+                        results.push(`
+                            <div class="bg-gray-800 p-3 rounded mt-2 text-xs font-mono">
+CREATE TABLE vehicles (<br>
+&nbsp;&nbsp;id TEXT PRIMARY KEY,<br>
+&nbsp;&nbsp;brand TEXT NOT NULL,<br>
+&nbsp;&nbsp;model TEXT NOT NULL,<br>
+&nbsp;&nbsp;year INTEGER,<br>
+&nbsp;&nbsp;mileage INTEGER,<br>
+&nbsp;&nbsp;price INTEGER,<br>
+&nbsp;&nbsp;fuel TEXT,<br>
+&nbsp;&nbsp;transmission TEXT,<br>
+&nbsp;&nbsp;power INTEGER,<br>
+&nbsp;&nbsp;category TEXT,<br>
+&nbsp;&nbsp;status TEXT,<br>
+&nbsp;&nbsp;description TEXT,<br>
+&nbsp;&nbsp;images JSONB,<br>
+&nbsp;&nbsp;features JSONB,<br>
+&nbsp;&nbsp;created_at TIMESTAMP DEFAULT NOW()<br>
+);
+                            </div>
+                        `);
+                        allGood = false;
+                    } else {
+                        results.push(`❌ Erreur de connexion: ${healthError.message}`);
+                        allGood = false;
+                    }
+                } else {
+                    results.push('✅ Connexion à la base réussie');
+                    results.push(`📊 Nombre de véhicules: ${healthCheck || 0}`);
+                }
+
+                // 4. Test des permissions
+                try {
+                    const { data: testData, error: testError } = await supabase
+                        .from('vehicles')
+                        .select('*')
+                        .limit(1);
+
+                    if (testError && testError.code !== 'PGRST116') {
+                        results.push(`⚠️ Permissions de lecture: ${testError.message}`);
+                    } else if (!testError) {
+                        results.push('✅ Permissions de lecture OK');
+                    }
+                } catch (permError) {
+                    results.push(`⚠️ Test permissions: ${permError.message}`);
+                }
+
+                // 5. Résumé final
+                if (allGood) {
+                    results.push('<div class="text-green-400 font-semibold mt-2">🎉 Connexion Supabase parfaitement configurée !</div>');
+                } else {
+                    results.push('<div class="text-orange-400 font-semibold mt-2">⚠️ Configuration partielle - Voir les détails ci-dessus</div>');
+                }
+
+            } catch (error) {
+                results.push(`❌ Erreur critique: ${error.message}`);
+                results.push('<div class="text-red-400 font-semibold mt-2">🚨 Connexion Supabase échouée</div>');
+                allGood = false;
+            }
+
+            // Afficher les résultats
+            resultsDiv.innerHTML = results.map(result => `<div>${result}</div>`).join('');
+
+            // Mettre à jour le statut global
+            updateConnectionStatus(allGood, allGood ? 'Supabase OK' : 'Problème Supabase');
         }
 
         // Créer la table des véhicules si elle n'existe pas
@@ -1070,37 +1177,47 @@
                     power: parseInt(formData.get('power')),
                     category: formData.get('category'),
                     status: formData.get('status'),
-                    description: formData.get('description'),
+                    description: formData.get('description') || '',
                     images: images,
                     features: [],
                     created_at: new Date().toISOString()
                 };
 
-                // Sauvegarder dans Supabase ou localStorage
-                if (supabase) {
-                    const { data, error } = await supabase
-                        .from('vehicles')
-                        .insert([vehicleData])
-                        .select();
+                console.log('Données du véhicule à ajouter:', vehicleData);
 
-                    if (error) {
-                        throw error;
+                // Toujours sauvegarder dans localStorage d'abord (fallback garanti)
+                const existingVehicles = JSON.parse(localStorage.getItem('vehicles') || '[]');
+                existingVehicles.push(vehicleData);
+                localStorage.setItem('vehicles', JSON.stringify(existingVehicles));
+
+                // Essayer Supabase en plus si disponible
+                if (supabase) {
+                    try {
+                        const { data, error } = await supabase
+                            .from('vehicles')
+                            .insert([vehicleData])
+                            .select();
+
+                        if (error) {
+                            console.warn('Erreur Supabase (fallback localStorage actif):', error);
+                            showNotification('Véhicule ajouté avec succès (sauvegarde locale) !', 'success');
+                        } else {
+                            showNotification('Véhicule ajouté avec succès dans Supabase !', 'success');
+                        }
+                    } catch (supabaseError) {
+                        console.warn('Erreur Supabase (fallback localStorage actif):', supabaseError);
+                        showNotification('Véhicule ajouté avec succès (sauvegarde locale) !', 'success');
                     }
-                    showNotification('Véhicule ajouté avec succès dans Supabase !', 'success');
                 } else {
-                    // Fallback vers localStorage
-                    const existingVehicles = JSON.parse(localStorage.getItem('vehicles') || '[]');
-                    existingVehicles.push(vehicleData);
-                    localStorage.setItem('vehicles', JSON.stringify(existingVehicles));
-                    showNotification('Véhicule ajouté avec succès (localStorage) !', 'success');
+                    showNotification('Véhicule ajouté avec succès (sauvegarde locale) !', 'success');
                 }
 
                 resetForm();
                 loadVehiclesDisplay(); // Recharger l'affichage des véhicules
                 
             } catch (error) {
-                console.error('Erreur lors de l\'ajout:', error);
-                showNotification('Erreur lors de l\'ajout du véhicule', 'error');
+                console.error('Erreur critique lors de l\'ajout:', error);
+                showNotification(`Erreur: ${error.message || 'Erreur inconnue'}`, 'error');
             } finally {
                 addBtnText.textContent = 'Ajouter le véhicule';
                 addLoading.classList.add('hidden');
@@ -1125,20 +1242,26 @@
             try {
                 let vehicles = [];
 
-                if (supabase) {
-                    // Charger depuis Supabase
-                    const { data, error } = await supabase
-                        .from('vehicles')
-                        .select('*')
-                        .order('created_at', { ascending: false });
+                // Toujours charger depuis localStorage d'abord
+                vehicles = JSON.parse(localStorage.getItem('vehicles') || '[]');
 
-                    if (error) {
-                        throw error;
+                // Essayer de charger depuis Supabase en complément
+                if (supabase) {
+                    try {
+                        const { data, error } = await supabase
+                            .from('vehicles')
+                            .select('*')
+                            .order('created_at', { ascending: false });
+
+                        if (!error && data && data.length > 0) {
+                            // Fusionner les données Supabase avec localStorage (Supabase prioritaire)
+                            const supabaseIds = data.map(v => v.id);
+                            const localOnlyVehicles = vehicles.filter(v => !supabaseIds.includes(v.id));
+                            vehicles = [...data, ...localOnlyVehicles];
+                        }
+                    } catch (supabaseError) {
+                        console.warn('Erreur Supabase, utilisation localStorage:', supabaseError);
                     }
-                    vehicles = data || [];
-                } else {
-                    // Fallback vers localStorage
-                    vehicles = JSON.parse(localStorage.getItem('vehicles') || '[]');
                 }
 
                 vehiclesData = vehicles; // Stocker pour les filtres
@@ -1146,7 +1269,14 @@
 
             } catch (error) {
                 console.error('Erreur lors du chargement des véhicules:', error);
-                grid.innerHTML = '<div class="text-center py-12 col-span-full text-red-400"><p>Erreur lors du chargement des véhicules</p></div>';
+                // En cas d'erreur, essayer de charger au moins localStorage
+                try {
+                    const localVehicles = JSON.parse(localStorage.getItem('vehicles') || '[]');
+                    vehiclesData = localVehicles;
+                    displayVehicles(localVehicles);
+                } catch (localError) {
+                    grid.innerHTML = '<div class="text-center py-12 col-span-full text-red-400"><p>Erreur lors du chargement des véhicules</p></div>';
+                }
             }
         }
 
@@ -1406,5 +1536,5 @@
             });
         }
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'980e8606723437e5',t:'MTc1ODE3NDE4My4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'980e916ca74f9e91',t:'MTc1ODE3NDY1MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
